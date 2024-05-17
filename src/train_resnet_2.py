@@ -16,49 +16,34 @@ import torchvision
 from torchvision import datasets, models, transforms
 from ellzaf_ml.tools import EarlyStopping
 
-EPOCHS = 500
-PATIENCE = 3
-BATCH_SIZE = 32
-EPOCH_LEN = len(str(EPOCHS))
-lr = 3e-5
-IMG_SIZE = 112
-MODEL_DIR = 'weights/resnet50_112_new_7.pth'
+from src.Utils.utils import *
+from src.Utils.train import *
+from src.dataset import CustomDataset
 
-torch.manual_seed(39)
+resnet_config_path = 'config/resnet_model.yaml'
+resnet_config = read_config(path = resnet_config_path)
+EPOCHS = resnet_config['EPOCHS']
+PATIENCE = resnet_config['PATIENCE']
+BATCH_SIZE = resnet_config['BATCH_SIZE']
+learning_rate = resnet_config['learning_rate']
+IMG_SIZE = resnet_config['IMG_SIZE']
+MODEL_DIR = resnet_config['MODEL_DIR']
+RANDOM_SEED = resnet_config['RANDOM_SEED']
+
+train_dir = resnet_config['train_dir']
+val_dir = resnet_config['val_dir']
+test_dir = resnet_config['test_dir']
+
+
+EPOCH_LEN = len(str(EPOCHS))
+
+torch.manual_seed(RANDOM_SEED)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
 device = torch.device(device)
 
-class CustomDataset(datasets.ImageFolder):
-    def __init__(self, root, special_augment_transform=None, general_augment_transform=None, special_classes=None):
-        super().__init__(root)
-        
-        if special_augment_transform is not None and not callable(special_augment_transform):
-            raise ValueError("special_augment_transform must be a callable or None")
-        if general_augment_transform is not None and not callable(general_augment_transform):
-            raise ValueError("general_augment_transform must be a callable or None")
-
-        if special_classes is not None:
-            if not isinstance(special_classes, (set, list, tuple)):
-                raise TypeError("special_classes must be a set, list, or tuple")
-            self.special_classes = set(special_classes)
-        else:
-            self.special_classes = set()
-
-        self.special_augment_transform = special_augment_transform
-        self.general_augment_transform = general_augment_transform
-
-    def __getitem__(self, index):
-        image, label = super().__getitem__(index)
-        class_name = self.classes[label]
-        if class_name in self.special_classes and self.special_augment_transform:
-            image = self.special_augment_transform(image)
-        elif self.general_augment_transform:
-            image = self.general_augment_transform(image)
-
-        return image, label
 
 transform_original = transforms.Compose([
     transforms.Resize(IMG_SIZE),
@@ -86,17 +71,17 @@ spoof_transforms = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-train_orig = datasets.ImageFolder("face_train", transform=transform_original)
-train_flip = CustomDataset(root="face_train",
+train_orig = datasets.ImageFolder(train_dir, transform=transform_original)
+train_flip = CustomDataset(root=train_dir,
                            general_augment_transform=transform_flipped,
                            special_augment_transform=spoof_transforms,
-                           special_classes=['fake'])
+                           special_classes=['fake']) # check this
 
 train_data_combined = ConcatDataset([train_orig, train_flip])
 train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True)
 
-val_orig = datasets.ImageFolder("face_val", transform=transform_original)
-val_flip = CustomDataset(root="face_val",
+val_orig = datasets.ImageFolder(val_dir, transform=transform_original)
+val_flip = CustomDataset(root=val_dir,
                            general_augment_transform=transform_flipped,
                            special_augment_transform=spoof_transforms,
                            special_classes=['fake'])
@@ -104,7 +89,7 @@ val_flip = CustomDataset(root="face_val",
 val_data_combined = ConcatDataset([val_orig, val_flip])
 val_loader = DataLoader(val_data_combined, batch_size=BATCH_SIZE, shuffle=False)
 
-test_orig = datasets.ImageFolder("face_test", transform=transform_original)
+test_orig = datasets.ImageFolder(test_dir, transform=transform_original)
 test_loader = DataLoader(test_orig, batch_size=BATCH_SIZE, shuffle=False)
 
 print(len(train_data_combined),len(val_data_combined),len(test_orig))
@@ -147,30 +132,6 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
     accuracy = total_correct / total_samples
     return avg_loss, avg_f1, accuracy, avg_grad
 
-def validate_one_epoch(model, val_loader, device, criterion, scheduler_lr=None):
-    model.eval()
-    total_loss, total_f1, total_correct, total_samples = 0, 0, 0, 0
-
-    with torch.no_grad():
-        for val_x_data, val_y_data in val_loader:
-            val_x_data, val_y_data = val_x_data.to(device), val_y_data.to(device)
-            y_val_pred = model(val_x_data)
-            val_loss = criterion(y_val_pred, val_y_data)
-
-            _, y_val_pred_max = torch.max(y_val_pred, dim=1)
-            f1_score_val = f1_score(val_y_data.cpu(), y_val_pred_max.cpu(), average="macro")
-            total_correct += (y_val_pred_max == val_y_data).sum().item()
-            total_samples += val_y_data.size(0)
-            total_loss += val_loss.item()
-            total_f1 += f1_score_val.item()
-
-    avg_loss = total_loss / len(val_loader)
-    if scheduler_lr:
-        scheduler_lr.step(avg_loss)
-    avg_f1 = total_f1 / len(val_loader)
-    accuracy = total_correct / total_samples
-    return avg_loss, avg_f1, accuracy
-
 model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
 for param in model.parameters():
     param.requires_grad = False
@@ -184,9 +145,9 @@ model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.Adam(model.parameters(), lr=lr)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=10)
-scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, T_max=490, eta_min=lr/100)
+scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, T_max=490, eta_min=learning_rate/100)
 scheduler_lr = lr_scheduler.SequentialLR(optimizer, [scheduler_linear,scheduler_cosine],milestones=[10])
 
 early_stopping = EarlyStopping(
@@ -197,7 +158,7 @@ early_stopping = EarlyStopping(
 
 start_time = time.time()
 for e in range(1, EPOCHS + 1):
-    avg_loss_train, avg_f1_train, avg_accuracy_train, avg_grad = train_one_epoch(model, train_loader, device,
+    avg_loss_train, avg_f1_train, avg_accuracy_train, avg_grad = train_one_epoch(model, train_loader, device, 
                                                                            optimizer, criterion, scheduler_lr)
     avg_loss_val, avg_f1_val, avg_accuracy_val = validate_one_epoch(model, val_loader, device, criterion)
 
@@ -233,35 +194,4 @@ model.load_state_dict(
 )
 model.eval()
 
-with torch.no_grad():
-    correct = 0
-    tp = 0
-    tn = 0
-    fp = 0
-    fn = 0
-
-    for data, target in test_loader:
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        pred = output.argmax(dim=1, keepdim=True)
-
-        tp += (pred.eq(1) & target.eq(1).view_as(pred)).sum().item()
-        tn += (pred.eq(0) & target.eq(0).view_as(pred)).sum().item()
-        fp += (pred.eq(1) & target.eq(0).view_as(pred)).sum().item()
-        fn += (pred.eq(0) & target.eq(1).view_as(pred)).sum().item()
-
-        correct += pred.eq(target.view_as(pred)).sum().item()
-
-    accuracy = correct / len(test_loader.dataset)
-    far = fp / (fp + tn)
-    frr = fn / (fn + tp)
-
-    recall = tp / (tp + fn)
-
-    hter = (far + frr ) / 2
-
-    print(f"test acc: {accuracy * 100}%")
-    print(f"recall: {recall * 100}%")
-    print(f"far: {far * 100}%")
-    print(f"frr: {frr * 100}%")
-    print(f"hter: {hter * 100}%")
+evaluate_model(model, test_loader, device=device)

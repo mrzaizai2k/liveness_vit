@@ -9,3 +9,12 @@ RANDOM_SEED: 39
 train_dir: data/face_train
 val_dir: data/face_val
 test_dir: data/face_test
+
+# [  6/500] Loss: 0.00000 | F1-score: 1.000 | Acc: 1.000 | Val Loss: 0.266 | Val F1: 0.860 | Val Acc: 0.929 | 00:40:56s | Grad: 0.00003
+# EarlyStopping counter: 3 out of 3
+# Early stopping after 6 Epochs
+# test acc: 99.85585585585585%
+# recall: 99.72997299729973%
+# far: 0.06009615384615385%
+# frr: 0.27002700270027%
+# hter: 0.16506157827321194%

@@ -68,7 +68,9 @@ while True:
         if not ret:
             continue
         # Resize the frame to have a maximum width of 640 pixels
-        frame = imutils.resize(frame, height=480, width=640)
+        # frame = imutils.resize(frame, height=480, width=640)
+        frame = cv2.resize(frame, (640,480))
+
 
         # Grab the frame dimensions and convert it to a blob
         (h, w) = frame.shape[:2]
@@ -99,7 +101,7 @@ while True:
                 # Extract and refine the face box
                 if abs(endX - startX) < 100 or abs(endY - startY) < 100:
                     continue
-                
+
                 refined = refine([[startX, startY, endX, endY]], max_height=480, max_width=640, shift=0)[0]
                 startX, startY, endX, endY = refined[:4].astype(int)
 

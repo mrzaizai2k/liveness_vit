@@ -1,11 +1,18 @@
+import sys
+sys.path.append("")
+
+
 import cv2
 import numpy as np
 from PIL import Image
 import timm
 import torch
-from torch import nn
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, ConcatDataset
+from torchvision import  transforms
+
+from src.Utils.utils import *
+
+model_dir = "models/liveness/weights/vit_teacher_224.pth"
+img_height = 224
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -20,66 +27,21 @@ net = cv2.dnn.readNetFromCaffe(caffe_model, caffe_weights)
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
-model.load_state_dict(torch.load("weights/vit_teacher_224.pth", map_location=torch.device(device)))
+model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))
 model.eval()
 
-# Get model-specific transforms (normalization, resize)
-# data_config = timm.data.resolve_model_data_config(model)
-# transforms = timm.data.create_transform(**data_config, is_training=False)
 
-def refine(boxes, max_width, max_height, shift=0.1):
-    """Refine the face boxes to suit the face landmark detection's needs.
-
-    Args:
-        boxes: [[x1, y1, x2, y2], ...]
-        max_width: Value larger than this will be clipped.
-        max_height: Value larger than this will be clipped.
-        shift (float, optional): How much to shift the face box down. Defaults to 0.1.
-
-    Returns:
-       Refined results.
-    """
-    boxes = np.asarray(boxes, dtype=np.float64)
-
-    refined = boxes.copy()
-    width = refined[:, 2] - refined[:, 0]
-    height = refined[:, 3] - refined[:, 1]
-
-    # Move the boxes in Y direction
-    shift = height * shift
-    refined[:, 1] += shift
-    refined[:, 3] += shift
-    center_x = (refined[:, 0] + refined[:, 2]) / 2
-    center_y = (refined[:, 1] + refined[:, 3]) / 2
-
-    # Make the boxes squares
-    square_sizes = np.maximum(width, height)
-    refined[:, 0] = center_x - square_sizes / 2
-    refined[:, 1] = center_y - square_sizes / 2
-    refined[:, 2] = center_x + square_sizes / 2
-    refined[:, 3] = center_y + square_sizes / 2
-
-    # Clip the boxes for safety
-    refined[:, 0] = np.clip(refined[:, 0], 0, max_width)
-    refined[:, 1] = np.clip(refined[:, 1], 0, max_height)
-    refined[:, 2] = np.clip(refined[:, 2], 0, max_width)
-    refined[:, 3] = np.clip(refined[:, 3], 0, max_height)
-
-    return refined
-
-transform_original = transforms.Compose([
-    transforms.Resize(224),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+data_config = timm.data.resolve_model_data_config(model)
+print("data_config", data_config)
+transform_original = timm.data.create_transform(**data_config, is_training=False)
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/fake2.mp4")
+cap = cv2.VideoCapture(0)
 
 while True:
     try: 
         ret, frame = cap.read()
+
         if not ret:
             break
 
@@ -117,6 +79,7 @@ while True:
                 endY = min(h, endY)
                 if abs(endX - startX) < 100 or abs(endY-startY)< 100:
                     continue
+
                 refined =  refine([[startX, startY, endX, endY]], max_height=480, max_width=640)[0]
 
                 startX, startY, endX, endY = refined[:4].astype(int)

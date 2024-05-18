@@ -133,7 +133,7 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
     accuracy = total_correct / total_samples
     return avg_loss, avg_f1, accuracy, avg_grad
 
-model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
+model = torchvision.models.resnet101(weights='IMAGENET1K_V1')
 for param in model.parameters():
     param.requires_grad = False
 
@@ -180,7 +180,7 @@ for e in range(1, EPOCHS + 1):
         print(f"Early stopping after {e} Epochs")
         break
 
-model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
+model = torchvision.models.resnet101(weights='IMAGENET1K_V1')
 for param in model.parameters():
     param.requires_grad = False
 

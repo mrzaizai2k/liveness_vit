@@ -1,4 +1,4 @@
-EPOCHS: 500
+EPOCHS: 3
 PATIENCE: 3
 BATCH_SIZE: 32
 learning_rate: 0.000003
@@ -40,3 +40,13 @@ test_dir: data/face_test
 # far: 8.533653846153847%
 # frr: 14.13141314131413%
 # hter: 11.332533493733989%
+
+# resnet50 in2 3 epochs
+# [3/3] [410/419] lr 0.0000006240 | loss 0.6685593128 (0.6772) | grad_norm 1.4182 (1.6253) | 
+# [3/3] Loss: 0.67547 | F1-score: 0.539 | Acc: 0.608 | Val Loss: 0.679 | Val F1: 0.351 | Val Acc: 0.575 | 00:04:54s | Grad: 1.62190
+# Validation loss decreased (0.683966 --> 0.678999).  Saving model ...
+# test acc: 57.26126126126127%
+# recall: 15.121512151215121%
+# far: 14.603365384615385%
+# frr: 84.87848784878487%
+# hter: 49.74092661670013%

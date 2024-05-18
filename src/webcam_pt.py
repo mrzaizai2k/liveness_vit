@@ -16,7 +16,7 @@ from src.Utils.utils import *
 
 
 
-model_dir = 'models/liveness/weights/resnet101_224.pth' 
+model_dir = 'models/liveness/weights/resnet50_224_in2.pth' 
 img_height = 224
 
 # Check if CUDA is available and set the device
@@ -34,7 +34,7 @@ print("[INFO] loading liveness detector...")
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize(232),
     transforms.CenterCrop(img_height),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -43,7 +43,7 @@ transform_original = transforms.Compose([
 
 # Load the liveness detection model
 
-model = torchvision.models.resnet101(weights='IMAGENET1K_V1')
+model = torchvision.models.resnet50(weights='IMAGENET1K_V2')
 for param in model.parameters():
     param.requires_grad = False
 

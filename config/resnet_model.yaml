@@ -3,7 +3,7 @@ PATIENCE: 3
 BATCH_SIZE: 32
 learning_rate: 0.000003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/resnet101_224.pth
+MODEL_DIR: models/liveness/weights/resnet50_224_in2.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -29,3 +29,14 @@ test_dir: data/face_test
 # far: 1.2620192307692308%
 # frr: 18.631863186318633%
 # hter: 9.946941208543931%
+
+
+# resnet50_in2
+# [ 46/500] Loss: 0.21329 | F1-score: 0.968 | Acc: 0.971 | Val Loss: 0.501 | Val F1: 0.607 | Val Acc: 0.715 | 01:16:37s | Grad: 0.61796
+# EarlyStopping counter: 3 out of 3
+# Early stopping after 46 Epochs
+# test acc: 89.22522522522523%
+# recall: 85.86858685868587%
+# far: 8.533653846153847%
+# frr: 14.13141314131413%
+# hter: 11.332533493733989%

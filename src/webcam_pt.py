@@ -17,7 +17,7 @@ from src.Utils.utils import *
 
 
 model_dir = 'models/liveness/weights/resnet50_112.pth' 
-img_height = 112
+img_height = 224
 
 # Check if CUDA is available and set the device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -34,7 +34,7 @@ print("[INFO] loading liveness detector...")
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(img_height),
+    transforms.Resize(256),
     transforms.CenterCrop(img_height),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),

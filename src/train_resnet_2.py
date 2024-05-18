@@ -46,14 +46,14 @@ device = torch.device(device)
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 transform_flipped = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
     transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
     transforms.RandomHorizontalFlip(p=1),
@@ -62,13 +62,14 @@ transform_flipped = transforms.Compose([
 ])
 
 spoof_transforms = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
     transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 train_orig = datasets.ImageFolder(train_dir, transform=transform_original)

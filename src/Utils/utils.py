@@ -2,10 +2,63 @@ from functools import wraps
 import time
 from datetime import datetime
 import os
-import psutil
 import json
 import yaml
 import numpy as np
+import cv2
+import base64
+
+
+def bytes_to_image(image_bytes):
+  """
+  Converts a bytes object containing image data to an OpenCV image.
+
+  Args:
+      image_bytes (bytes): The bytes object representing the image data.
+
+  Returns:
+      numpy.ndarray: The OpenCV image as a NumPy array.
+
+  Raises:
+      ValueError: If the image data is invalid.
+  """
+  # Convert the bytes object to a NumPy array
+  nparr = np.frombuffer(image_bytes, np.uint8)
+
+  # Decode the image using cv2.imdecode()
+  img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+  # Check for decoding errors
+  if img is None:
+    raise ValueError("Invalid image data")
+
+  return img
+
+
+def convert_img_to_base64(img):
+    # Encode image to base64 string
+    retval, buffer = cv2.imencode('.jpg', img)  # Adjust format as needed (e.g., '.png')
+    base64_img = base64.b64encode(buffer).decode('utf-8')
+    return base64_img
+
+
+def convert_img_path_to_base64(image_path):
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            raise Exception(f"Failed to read image from {image_path}")
+        base64_image = convert_img_to_base64(img)
+        return base64_image
+
+    except FileNotFoundError:
+        print("The specified file was not found.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+def convert_base64_to_img(base64_image:str):
+    image_bytes = base64.b64decode(base64_image)
+    img = bytes_to_image(image_bytes)
+    return img
 
 def refine(boxes, max_width, max_height, shift=0.1):
     """
@@ -58,18 +111,6 @@ def convert_ms_to_hms(ms):
     seconds = round(seconds, 2)
     
     return f"{int(hours)}:{int(minutes):02d}:{seconds:05.2f}"
-
-def measure_memory_usage(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        process = psutil.Process(os.getpid())
-        mem_start = process.memory_info()[0]
-        rt = func(*args, **kwargs)
-        mem_end = process.memory_info()[0]
-        diff_MB = (mem_end - mem_start) / (1024 * 1024)  # Convert bytes to megabytes
-        print('Memory usage of %s: %.2f MB' % (func.__name__, diff_MB))
-        return rt
-    return wrapper
 
 
 def timeit(func):

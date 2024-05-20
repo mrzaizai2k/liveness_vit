@@ -5,36 +5,24 @@ from PIL import Image
 import timm
 import numpy as np
 import torch
-from torch import nn
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, ConcatDataset
+from torchvision import transforms
+from src.Utils.inference_utils import *
 
-
+model_path = "models/liveness/weights/vit_teacher.pth"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
-model.load_state_dict(
-    torch.load(
-        "models/liveness/weights/vit_teacher_one.pth"
-    )
-)
-model.eval()
+model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
 
-transform_original = transforms.Compose([
-    transforms.Resize(224),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+model.eval()
 
 
 data_config = timm.data.resolve_model_data_config(model)
 print("data_config", data_config)
 transforms = timm.data.create_transform(**data_config, is_training=False)
-
 
 
 # 1. Load the image
@@ -55,7 +43,7 @@ prob = torch.nn.functional.softmax(output[0], dim=0)
 print("prob ", prob)
 
 
-save_path = "models/liveness/vit_teacher_one.onnx"
+save_path = "models/liveness/weights/vit_teacher.onnx"
 
 torch_out = model(img)
 

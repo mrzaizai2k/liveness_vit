@@ -3,7 +3,7 @@ PATIENCE: 3
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_new_config.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_new_config_siw.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -26,11 +26,12 @@ test_dir: data/face_test
 # frr: 7.597895967270602%
 # hter: 3.8540747752560285%
 
-# siw 32
+# siw 16
+# [  5/500] Loss: 0.01309 | F1-score: 0.997 | Acc: 0.998 | Val Loss: 0.453 | Val F1: 0.790 | Val Acc: 0.862 | 00:53:10s | Grad: 1.43401
 # EarlyStopping counter: 3 out of 3
-# Early stopping after 6 Epochs
-# test acc: 99.09909909909909%
-# recall: 97.83978397839785%
-# far: 0.06009615384615385%
-# frr: 2.16021602160216%
-# hter: 1.1101560877241572%
+# Early stopping after 5 Epochs
+# test acc: 99.63963963963964%
+# recall: 99.09990999099911%
+# far: 0.0%
+# frr: 0.9000900090009001%
+# hter: 0.45004500450045004%

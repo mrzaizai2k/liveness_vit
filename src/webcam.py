@@ -11,7 +11,7 @@ from torchvision import  transforms
 
 from src.Utils.utils import *
 
-model_dir = "models/liveness/weights/vit_teacher_new_config.pth"
+model_dir = "models/liveness/weights/vit_teacher_new_config_siw.pth"
 img_height = 224
 
 # Set device
@@ -36,7 +36,7 @@ print("data_config", data_config)
 transform_original = timm.data.create_transform(**data_config, is_training=False)
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/vid.mp4", cv2.CAP_MSMF)
+cap = cv2.VideoCapture("image_test/vid.mp4")
 
 while True:
     try: 

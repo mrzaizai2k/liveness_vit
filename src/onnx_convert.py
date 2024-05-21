@@ -8,7 +8,7 @@ import torch
 from torchvision import transforms
 from src.Utils.inference_utils import *
 
-model_path = "models/liveness/weights/vit_teacher.pth"
+model_path = "models/liveness/weights/vit_teacher_base.pth"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
@@ -68,10 +68,10 @@ onnx.checker.check_model(onnx_model)
 
 import onnxruntime
 
-if torch.cuda.is_available():
-    ort_session = onnxruntime.InferenceSession(save_path, providers=['CUDAExecutionProvider'])
-else:
-    ort_session = onnxruntime.InferenceSession(save_path, providers=['CPUExecutionProvider'])
+# if torch.cuda.is_available():
+ort_session = onnxruntime.InferenceSession(save_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+# else:
+#     ort_session = onnxruntime.InferenceSession(save_path, providers=['CPUExecutionProvider'])
 
 def to_numpy(tensor):
     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()

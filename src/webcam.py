@@ -11,7 +11,7 @@ from torchvision import  transforms
 
 from src.Utils.utils import *
 
-model_dir = "models/liveness/weights/vit_teacher_siw.pth"
+model_dir = "models/liveness/weights/vit_teacher_siw_32.pth"
 img_height = 224
 
 # Set device
@@ -24,7 +24,7 @@ caffe_weights = "models/face_detector/res10_300x300_ssd_iter_140000.caffemodel"
 net = cv2.dnn.readNetFromCaffe(caffe_model, caffe_weights)
 
 # Load the ViT model with specified weights
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
 model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))

@@ -46,15 +46,16 @@ device = torch.device(device)
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(232),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 transform_flipped = transforms.Compose([
-    transforms.Resize(232),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.RandomRotation(degrees= 20),
     transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
     transforms.RandomHorizontalFlip(p=1),
     transforms.ToTensor(),
@@ -62,8 +63,9 @@ transform_flipped = transforms.Compose([
 ])
 
 spoof_transforms = transforms.Compose([
-    transforms.Resize(232),
+    transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.RandomRotation(degrees= 20),
     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
@@ -133,7 +135,7 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
     accuracy = total_correct / total_samples
     return avg_loss, avg_f1, accuracy, avg_grad
 
-model = torchvision.models.resnet50(weights='IMAGENET1K_V2')
+model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
 for param in model.parameters():
     param.requires_grad = False
 
@@ -180,7 +182,7 @@ for e in range(1, EPOCHS + 1):
         print(f"Early stopping after {e} Epochs")
         break
 
-model = torchvision.models.resnet50(weights='IMAGENET1K_V2')
+model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
 for param in model.parameters():
     param.requires_grad = False
 

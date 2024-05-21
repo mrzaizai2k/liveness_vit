@@ -52,6 +52,7 @@ transform_original = transforms.Compose([
 transform_flipped = transforms.Compose([
     transforms.Resize(IMG_SIZE),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.RandomRotation(degrees= 20),
     transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
     transforms.RandomHorizontalFlip(p=1),
     transforms.ToTensor(),
@@ -61,6 +62,7 @@ transform_flipped = transforms.Compose([
 spoof_transforms = transforms.Compose([
     transforms.Resize(IMG_SIZE),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.RandomRotation(degrees= 20),
     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),

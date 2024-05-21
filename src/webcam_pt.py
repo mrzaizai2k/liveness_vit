@@ -11,12 +11,13 @@ import numpy as np
 import torchvision
 from torchvision import transforms
 from PIL import Image
+from  torchvision.transforms import InterpolationMode 
 
 from src.Utils.utils import *
 
 
 
-model_dir = 'models/liveness/weights/resnet50_224.pth' 
+model_dir = 'models/liveness/weights/resnet50_224_siw.pth' 
 img_height = 224
 
 # Check if CUDA is available and set the device
@@ -34,7 +35,7 @@ print("[INFO] loading liveness detector...")
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize(256, interpolation=InterpolationMode.BICUBIC, ),
     transforms.CenterCrop(img_height),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -43,7 +44,7 @@ transform_original = transforms.Compose([
 
 # Load the liveness detection model
 
-model = torchvision.models.resnet50(weights='IMAGENET1K_V1')
+model = torchvision.models.resnet50()
 for param in model.parameters():
     param.requires_grad = False
 
@@ -57,7 +58,7 @@ model.eval()
 
 
 # Initialize the video capture
-cap = cv2.VideoCapture("image_test/vid.mp4", cv2.CAP_MSMF)
+cap = cv2.VideoCapture("image_test/vid.mp4")
 cap.set(3, 640)
 cap.set(4, 480)
 
@@ -111,12 +112,12 @@ while True:
 
                 # Extract the face ROI and preprocess it
                 face = frame[startY:endY, startX:endX]
-                cv2.imshow("Face", face)
+                # cv2.imshow("Face", face)
 
                 
                 # face = cv2.resize(face, (32, 32))
                 with torch.no_grad():
-                    face = Image.fromarray(face)
+                    face = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
                     input_tensor = transform_original(face).unsqueeze(0).to(device)  # unsqueeze single image into batch of 1
                     output = model(input_tensor)
                     # print("output ", output)

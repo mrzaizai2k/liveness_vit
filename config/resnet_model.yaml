@@ -1,9 +1,9 @@
-EPOCHS: 3
+EPOCHS: 500
 PATIENCE: 3
 BATCH_SIZE: 32
 learning_rate: 0.000003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/resnet50_224_in2.pth
+MODEL_DIR: models/liveness/weights/resnet50_224_siw.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train

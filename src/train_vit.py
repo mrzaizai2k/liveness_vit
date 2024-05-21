@@ -13,6 +13,7 @@ from sklearn.metrics import f1_score
 import timm
 from timm.models.layers import trunc_normal_
 from ellzaf_ml.tools import EarlyStopping
+from  torchvision.transforms import InterpolationMode 
 
 from src.Utils.utils import *
 from src.Utils.train import *
@@ -43,32 +44,32 @@ device = torch.device(device)
 
 
 transform_original = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
+    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
     transforms.CenterCrop(IMG_SIZE),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 ])
 
 transform_flipped = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
-    transforms.CenterCrop(IMG_SIZE),
     transforms.RandomRotation(degrees= 20),
+    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    transforms.CenterCrop(IMG_SIZE),
     transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
     transforms.RandomHorizontalFlip(p=1),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 ])
 
 spoof_transforms = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
-    transforms.CenterCrop(IMG_SIZE),
     transforms.RandomRotation(degrees= 20),
+    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    transforms.CenterCrop(IMG_SIZE),
     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
     transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 
 ])
 

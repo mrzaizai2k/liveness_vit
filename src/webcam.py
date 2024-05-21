@@ -11,7 +11,7 @@ from torchvision import  transforms
 
 from src.Utils.utils import *
 
-model_dir = "models/liveness/weights/vit_teacher_siw_32.pth"
+model_dir = "models/liveness/weights/vit_teacher_new_config.pth"
 img_height = 224
 
 # Set device

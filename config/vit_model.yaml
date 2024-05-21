@@ -3,7 +3,7 @@ PATIENCE: 3
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_siw_base.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -18,3 +18,10 @@ test_dir: data/face_test
 # far: 0.06009615384615385%
 # frr: 0.27002700270027%
 # hter: 0.16506157827321194%
+
+# Siw dâta base
+# test acc: 96.25531914893617%
+# recall: 92.4021040327294%
+# far: 0.11025358324145534%
+# frr: 7.597895967270602%
+# hter: 3.8540747752560285%

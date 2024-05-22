@@ -56,23 +56,29 @@ transform_flipped = transforms.Compose([
     transforms.RandomRotation(degrees= 20),
     transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.TrivialAugmentWide(),
     transforms.RandomRotation(degrees= 20),
     transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
     transforms.RandomHorizontalFlip(p=1),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    transforms.RandomErasing(p=0.1),
 ])
 
 spoof_transforms = transforms.Compose([
     transforms.RandomRotation(degrees= 20),
     transforms.Resize(256),
     transforms.CenterCrop(IMG_SIZE),
+    transforms.TrivialAugmentWide(),
+
     transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
     transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
     transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    transforms.RandomErasing(p=0.1),
+
 ])
 
 train_orig = datasets.ImageFolder(train_dir, transform=transform_original)
@@ -147,9 +153,9 @@ model.fc = nn.Linear(num_ftrs, 2)
 model = model.to(device)
 
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=2e-5)
 scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=10)
 scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, T_max=490, eta_min=learning_rate/100)
 scheduler_lr = lr_scheduler.SequentialLR(optimizer, [scheduler_linear,scheduler_cosine],milestones=[10])

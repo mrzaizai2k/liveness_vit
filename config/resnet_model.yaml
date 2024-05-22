@@ -1,9 +1,9 @@
 EPOCHS: 500
-PATIENCE: 3
+PATIENCE: 30
 BATCH_SIZE: 16
 learning_rate: 0.000003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/resnet101_224_siw.pth
+MODEL_DIR: models/liveness/weights/resnet50_siw_new_config.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -52,6 +52,16 @@ test_dir: data/face_test
 # hter: 49.74092661670013%
 
 # resnet101 siw
+# EarlyStopping counter: 3 out of 3
+# Early stopping after 17 Epochs
+# test acc: 75.81981981981983%
+# recall: 40.5040504050405%
+# far: 0.6009615384615385%
+# frr: 59.4959495949595%
+# hter: 30.04845556671052%
+
+# resnet50  siw reconfig
+# [ 17/500] Loss: 0.28215 | F1-score: 0.913 | Acc: 0.920 | Val Loss: 0.431 | Val F1: 0.713 | Val Acc: 0.808 | 01:04:40s | Grad: 3.24580
 # EarlyStopping counter: 3 out of 3
 # Early stopping after 17 Epochs
 # test acc: 75.81981981981983%

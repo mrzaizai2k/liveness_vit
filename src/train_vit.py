@@ -141,6 +141,11 @@ model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretraine
 model.head = torch.nn.Linear(model.head.in_features, 2)
 trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
+model.load_state_dict(
+    torch.load(
+        "models/liveness/weights/vit_teacher_one.pth"
+    )
+)
 
 criterion = nn.CrossEntropyLoss()
 

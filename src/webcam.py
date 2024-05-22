@@ -28,6 +28,7 @@ model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
 model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))
+model.half()
 model.eval()
 
 
@@ -99,7 +100,7 @@ while True:
                 with torch.no_grad():
                     face = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
                     input_tensor = transform_original(face).unsqueeze(0).to(device)  # unsqueeze single image into batch of 1
-                    output = model(input_tensor)
+                    output = model(input_tensor.half())
                     print("output ", output)
                     pred = output.argmax(dim=1, keepdim=True)
                     print("pred ", pred)

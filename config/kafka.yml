@@ -1,0 +1,4 @@
+kafka_topic: message 
+kafka_host: 'localhost'
+kafka_port: 9092
+kafka_group: 'baomc'

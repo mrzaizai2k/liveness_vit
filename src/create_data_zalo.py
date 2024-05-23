@@ -25,7 +25,7 @@ caffe_model = "models/face_detector/deploy.prototxt"
 caffe_weights = "models/face_detector/res10_300x300_ssd_iter_140000.caffemodel"
 net = cv2.dnn.readNetFromCaffe(caffe_model, caffe_weights)
 
-def save_faces_from_video(video_path, label, net, save_dir, frames_per_second=10):
+def save_faces_from_video(video_path, label, net, save_dir, frames_per_second=5):
     cap = cv2.VideoCapture(video_path)
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     frame_interval = fps // frames_per_second
@@ -46,7 +46,7 @@ def save_faces_from_video(video_path, label, net, save_dir, frames_per_second=10
             
             for i in range(detections.shape[2]):
                 confidence = detections[0, 0, i, 2]
-                if confidence > 0.9:
+                if confidence > 0.96:
                     box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
                     (startX, startY, endX, endY) = box.astype("int")
                     startX = max(0, startX)

@@ -154,3 +154,111 @@ def read_config(path = 'config/config.yaml'):
     with open(path, 'r') as file:
         data = yaml.safe_load(file)
     return data
+
+def base64_path_to_image(base64_path = 'image_test/fakeios.txt'):
+    with open(base64_path, 'r') as file:
+        base64_string = file.read().strip()
+    image_data = base64.b64decode(base64_string)
+    np_array = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+    return image
+
+def sort_coordinates(coords):
+    startX, startY, endX, endY = coords
+    startX, endX = sorted([startX, endX])
+    startY, endY = sorted([startY, endY])
+    return startX, startY, endX, endY
+
+class FaceDetection:
+    def __init__(self, model_config=None, model_config_path=None):
+
+        if model_config_path is not None:
+            self.model_config_path = model_config_path
+            self.model_config = self._read_config(path=self.model_config_path)
+        elif model_config is not None:
+            self.model_config = model_config
+
+        self.caffe_model = self.model_config.get("caffe_model")
+        self.caffe_weights = self.model_config.get("caffe_weights")
+        self.net = cv2.dnn.readNetFromCaffe(self.caffe_model, self.caffe_weights)
+
+        self.min_face_size = self.model_config.get("min_face_size")
+        self.max_face_count = self.model_config.get("max_face_count")
+        self.face_threshold = self.model_config.get("face_threshold")
+
+    def _read_config(self, path='config/config.yaml'):
+        with open(path, 'r') as file:
+            data = yaml.safe_load(file)
+        return data
+    
+    def detect_faces(self, frame):
+        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
+            (300, 300), (104.0, 177.0, 123.0))
+
+        # pass the blob through the network and obtain the detections and
+        # predictions
+        self.net.setInput(blob)
+        detections = self.net.forward()    
+        return detections
+    
+    def predict(self, frame):
+        face_locations = []
+
+        (h, w) = frame.shape[:2]
+
+        if w > h:
+            frame = cv2.resize(frame, (640,480))
+
+        detections = self.detect_faces(frame)
+
+        for i in range(0, min(detections.shape[2], self.max_face_count)): # process 5 largest faces
+
+            # extract the confidence (i.e., probability) associated with the
+            # prediction
+            confidence = detections[0, 0, i, 2]
+
+            # filter out weak detections
+            if not (confidence > self.face_threshold):
+                continue
+
+            # compute the (x, y)-coordinates of the bounding box for
+            # the face and extract the face ROI
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            (startX, startY, endX, endY) = box.astype("int")
+
+            # ensure the detected bounding box does fall outside the
+            # dimensions of the frame
+            startX = max(0, startX)
+            startY = max(0, startY)
+            endX = min(w, endX)
+            endY = min(h, endY)
+
+            if startX > w or  startY > h:
+                continue
+
+            if (abs(endX - startX) < self.min_face_size) or (abs(endY-startY) < self.min_face_size):
+                continue
+
+            face_locations.append([startX, startY, endX, endY])
+
+        return face_locations, frame
+
+def draw_image(frame, pred_class, prob, location):
+    
+    startX, startY, endX, endY = location
+    if pred_class[0] == 1:
+        text = 'real'
+        color = (0,255,0)
+        cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+        cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+    else:
+        text = 'fake'
+        color = (255,0,0)
+        cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+        cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        
+    return frame

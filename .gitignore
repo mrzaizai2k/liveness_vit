@@ -167,6 +167,8 @@ face_val/
 *.mp4
 *.jpg
 *.png
+*.csv
 image_test/
 models/
 weights/
+data/

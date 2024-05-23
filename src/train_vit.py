@@ -143,7 +143,7 @@ trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
 model.load_state_dict(
     torch.load(
-        "models/liveness/weights/vit_teacher_one.pth"
+        "models/liveness/weights/vit_teacher_new_config_siw.pth"
     )
 )
 

@@ -9,6 +9,51 @@ import cv2
 import base64
 
 
+import socket
+import shutil
+import psutil
+
+
+    
+def check_localhost():
+    localhost = socket.gethostbyname('localhost')
+    return localhost
+
+def check_disk_usage(disk):
+    du = shutil.disk_usage(disk)
+    free = du.free / du.total * 100
+    return free 
+
+def check_memory_usage():
+    mu = psutil.virtual_memory().available
+    total = mu / (1024.0 ** 2)
+    return total
+
+def check_cpu_usage():
+    usage = psutil.cpu_percent(1)
+    return usage
+
+def convert_img_to_base64(img):
+    # Encode image to base64 string
+    retval, buffer = cv2.imencode('.jpg', img)  # Adjust format as needed (e.g., '.png')
+    base64_img = base64.b64encode(buffer).decode('utf-8')
+    return base64_img
+
+
+def convert_img_path_to_base64(image_path):
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            raise Exception(f"Failed to read image from {image_path}")
+        base64_image = convert_img_to_base64(img)
+        return base64_image
+
+    except FileNotFoundError:
+        print("The specified file was not found.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+
 def bytes_to_image(image_bytes):
   """
   Converts a bytes object containing image data to an OpenCV image.
@@ -34,27 +79,7 @@ def bytes_to_image(image_bytes):
 
   return img
 
-
-def convert_img_to_base64(img):
-    # Encode image to base64 string
-    retval, buffer = cv2.imencode('.jpg', img)  # Adjust format as needed (e.g., '.png')
-    base64_img = base64.b64encode(buffer).decode('utf-8')
-    return base64_img
-
-
-def convert_img_path_to_base64(image_path):
-    try:
-        img = cv2.imread(image_path)
-        if img is None:
-            raise Exception(f"Failed to read image from {image_path}")
-        base64_image = convert_img_to_base64(img)
-        return base64_image
-
-    except FileNotFoundError:
-        print("The specified file was not found.")
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
+    
 def convert_base64_to_img(base64_image:str):
     image_bytes = base64.b64decode(base64_image)
     img = bytes_to_image(image_bytes)
@@ -208,7 +233,11 @@ class FaceDetection:
 
         if w > h:
             frame = cv2.resize(frame, (640,480))
+        else:
+            frame = cv2.resize(frame, (300,400))
 
+        (h, w) = frame.shape[:2]
+        
         detections = self.detect_faces(frame)
 
         for i in range(0, min(detections.shape[2], self.max_face_count)): # process 5 largest faces
@@ -236,7 +265,7 @@ class FaceDetection:
             if startX > w or  startY > h:
                 continue
 
-            if (abs(endX - startX) < self.min_face_size) or (abs(endY-startY) < self.min_face_size):
+            if (abs(endX - startX) <= self.min_face_size) or (abs(endY-startY) <= self.min_face_size):
                 continue
 
             face_locations.append([startX, startY, endX, endY])

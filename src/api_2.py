@@ -104,7 +104,7 @@ def main():
     LIVENESS_PORT = connection_config.get("LIVENESS_PORT")
 
     # app.run(host=LIVENESS_HOST, port=str(LIVENESS_PORT), debug=True)
-    serve(app, host=LIVENESS_HOST, port=LIVENESS_PORT, threads=4, url_scheme='https' , expose_tracebacks=True)
+    serve(app, host=LIVENESS_HOST, port=8092, threads=4, url_scheme='https' , expose_tracebacks=True)
 
 
 if __name__ == "__main__":

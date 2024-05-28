@@ -6,15 +6,14 @@ import cv2
 
 from flask import Flask, request, jsonify
 from waitress import serve
+import flask_monitoringdashboard as dashboard
 
 from src.Utils.utils import *
 from src.Utils.inference_utils import *
 from src.model import VisionTransformerModel, ResnetModel
 
-import logging
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
-
+from src.logger import create_logger
+logger = create_logger(logfile="logs/liveness.log")
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,6 +30,7 @@ connection_config_path = "config/connection.yml"
 connection_config = read_config(path=connection_config_path)
 model = VisionTransformerModel(model_config_path=model_config_path)
 face_detector = FaceDetection(model_config_path="config/face_detection.yml")
+logger.info('Loading models')
 
 
 @app.route("/")
@@ -48,7 +48,7 @@ def health():
         "localhost_resolution": check_localhost(),
         "port": request.environ.get('SERVER_PORT')
     }
-    
+    logger.debug(msg=f"checks: {checks}")
     
     return jsonify(checks), 200
 
@@ -85,10 +85,13 @@ def predict_liveness():
             data = {"status_code": 200,
                     "liveness": 'real',
                     "score": score}
+            logger.debug(msg=f"data: {data}")
         else:
             data = {"status_code": 200,
                     "liveness": 'fake',
                     "score": score}
+            logger.debug(msg=f"data: {data}")
+
 
         return jsonify(data), 200
         
@@ -102,7 +105,7 @@ def main():
     
     LIVENESS_HOST = connection_config.get("LIVENESS_HOST")
     LIVENESS_PORT = connection_config.get("LIVENESS_PORT")
-
+    logger.info(msg=f"Host: {LIVENESS_HOST} - Port: {LIVENESS_PORT}")
     # app.run(host=LIVENESS_HOST, port=str(LIVENESS_PORT), debug=True)
     serve(app, host=LIVENESS_HOST, port=LIVENESS_PORT, threads=4, url_scheme='https' , expose_tracebacks=True)
 

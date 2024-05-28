@@ -10,6 +10,8 @@ import ast
 warnings.filterwarnings("ignore")
 
 from src.Utils.utils import *
+from src.Utils.logger import create_logger
+logger = create_logger(logfile="logs/liveness_test.log")
 
 
 def test_liveness_bytes_api(img_path, root_url, face_detect=True):
@@ -21,6 +23,7 @@ def test_liveness_bytes_api(img_path, root_url, face_detect=True):
     headers = {'Content-Type': 'image/jpeg'}
     res = requests.post(url, data=img_bytes, headers=headers)
     print(f'result: {res.json()}')
+    logger.debug(msg=f"res.json: {res.json()}")
 
 
 
@@ -160,6 +163,7 @@ def check_api_health(root_url):
             print("Disk Usage (%):", disk_usage)
             print("Localhost Resolution:", localhost_resolution)
             print("localhost_port:", localhost_port)
+            logger.debug(msg=f"health_data: {health_data}")
             
             # You can return this information if needed
             return health_data

@@ -6,14 +6,13 @@ import cv2
 
 from flask import Flask, request, jsonify
 from waitress import serve
-import flask_monitoringdashboard as dashboard
 
 from src.Utils.utils import *
 from src.Utils.inference_utils import *
 from src.model import VisionTransformerModel, ResnetModel
 
-from src.logger import create_logger
-logger = create_logger(logfile="logs/liveness.log")
+from src.Utils.logger import create_logger
+logger = create_logger(logfile="logs/liveness_api.log")
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -1,6 +1,9 @@
 absl-py==2.1.0
+albucore==0.0.5
+albumentations==1.4.8
 alembic==1.13.1
 annotated-types==0.6.0
+antlr4-python3-runtime==4.9.3
 anyio==4.3.0
 argon2-cffi==23.1.0
 argon2-cffi-bindings==21.2.0
@@ -13,15 +16,15 @@ beautifulsoup4==4.12.3
 bleach==6.1.0
 blinker==1.8.2
 blis==0.7.11
-Brotli==1.0.9
+Brotli @ file:///C:/b/abs_3d36mno480/croot/brotli-split_1714483178642/work
 catalogue==2.0.10
-certifi==2024.2.2
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1707022139797/work/certifi
 cffi==1.16.0
 chardet==5.2.0
-charset-normalizer==2.0.4
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
 click==8.1.7
 cloudpathlib==0.16.0
-colorama==0.4.6
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1666700638685/work
 coloredlogs==15.0.1
 colorlog==6.8.2
 comm==0.2.2
@@ -42,21 +45,22 @@ fastcore==1.5.35
 fastdownload==0.0.7
 fastjsonschema==2.19.1
 fastprogress==1.0.3
-filelock==3.13.1
+filelock @ file:///C:/b/abs_f2gie28u58/croot/filelock_1700591233643/work
 Flask==3.0.3
 flatbuffers==24.3.25
 fonttools==4.51.0
 fqdn==1.5.1
-fsspec==2024.3.1
-gmpy2==2.1.2
+fsspec @ file:///home/conda/feedstock_root/build_artifacts/fsspec_1710808267764/work
+gmpy2 @ file:///C:/ci/gmpy2_1645438895476/work
 greenlet==3.0.3
 grpcio==1.63.0
 h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.0
-huggingface_hub==0.23.0
+huggingface_hub @ file:///home/conda/feedstock_root/build_artifacts/huggingface_hub_1714763326260/work
 humanfriendly==10.0
-idna==3.7
+idna @ file:///C:/b/abs_aad84bnnw5/croot/idna_1714398896795/work
+imageio==2.34.1
 imutils==0.5.4
 inquirerpy==0.3.4
 intel-openmp==2021.4.0
@@ -68,18 +72,18 @@ itsdangerous==2.2.0
 jax==0.4.28
 jaxlib==0.4.28
 jedi==0.19.1
-Jinja2==3.1.3
+Jinja2 @ file:///C:/b/abs_f7x5a8op2h/croot/jinja2_1706733672594/work
 joblib==1.4.2
 json5==0.9.25
 jsonpointer==2.4
 jsonschema==4.22.0
 jsonschema-specifications==2023.12.1
 jupyter==1.0.0
-jupyter_client==8.6.1
 jupyter-console==6.6.3
-jupyter_core==5.7.2
 jupyter-events==0.10.0
 jupyter-lsp==2.2.5
+jupyter_client==8.6.1
+jupyter_core==5.7.2
 jupyter_server==2.14.0
 jupyter_server_terminals==0.5.3
 jupyterlab==4.1.8
@@ -90,45 +94,47 @@ kafka-python==2.0.2
 kiwisolver==1.4.5
 langcodes==3.4.0
 language_data==1.2.0
+lazy_loader==0.4
 Mako==1.3.5
 marisa-trie==1.1.1
 Markdown==3.6
-MarkupSafe==2.1.3
+MarkupSafe @ file:///C:/b/abs_ecfdqh67b_/croot/markupsafe_1704206030535/work
 matplotlib==3.9.0
 matplotlib-inline==0.1.7
 mediapipe==0.10.14
 mistune==3.0.2
 mkl==2021.4.0
 mkl-fft==1.3.1
-mkl-random==1.2.2
+mkl-random @ file:///C:/ci_310/mkl_random_1643050563308/work
 mkl-service==2.4.0
 ml-dtypes==0.4.0
-mpmath==1.3.0
+mpmath @ file:///C:/b/abs_7833jrbiox/croot/mpmath_1690848321154/work
 murmurhash==1.0.10
 nbclient==0.10.0
 nbconvert==7.16.4
 nbformat==5.10.4
 nest-asyncio==1.6.0
-networkx==3.1
+networkx @ file:///C:/b/abs_e6gi1go5op/croot/networkx_1690562046966/work
 notebook==7.1.3
 notebook_shim==0.2.4
-numpy==1.24.3
+numpy==1.26.4
+omegaconf==2.3.0
 onnx==1.16.0
 onnxconverter-common==1.14.0
 onnxruntime-gpu==1.17.1
 onnxscript==0.1.0.dev20240519
 opencv-contrib-python==4.9.0.80
 opencv-python==4.9.0.80
+opencv-python-headless==4.9.0.80
 opt-einsum==3.3.0
 optuna==3.6.1
 overrides==7.7.0
-packaging==24.0
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1710075952259/work
 pandas==2.2.2
 pandocfilters==1.5.1
 parso==0.8.4
 pfzy==0.3.4
-pillow==10.3.0
-pip==24.0
+pillow @ file:///C:/b/abs_95ls_qh4c2/croot/pillow_1714398870615/work
 platformdirs==4.2.2
 preshed==3.0.9
 prometheus_client==0.20.0
@@ -136,33 +142,35 @@ prompt-toolkit==3.0.43
 protobuf==3.20.2
 psutil==5.9.8
 pure-eval==0.2.2
+py-cpuinfo==9.0.0
 pycparser==2.22
 pydantic==2.7.1
 pydantic_core==2.18.2
 Pygments==2.18.0
 pyparsing==3.1.2
 pyreadline3==3.4.1
-PySocks==1.7.1
+PySocks @ file:///C:/ci_310/pysocks_1642089375450/work
 python-dateutil==2.9.0.post0
 python-json-logger==2.0.7
 pytz==2024.1
 pywin32==306
 pywinpty==2.0.13
-PyYAML==6.0.1
+PyYAML @ file:///C:/b/abs_782o3mbw7z/croot/pyyaml_1698096085010/work
 pyzmq==26.0.3
 qtconsole==5.5.2
 QtPy==2.4.1
 referencing==0.35.1
-requests==2.31.0
+requests @ file:///C:/b/abs_474vaa3x9e/croot/requests_1707355619957/work
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rpds-py==0.18.1
 safetensors==0.4.3
+scikit-image==0.23.2
 scikit-learn==1.4.2
 scipy==1.13.0
+seaborn==0.13.2
 Send2Trash==1.8.3
-setuptools==69.5.1
-six==1.16.0
+six @ file:///tmp/build/80754af9/six_1644875935023/work
 smart-open==6.4.0
 sniffio==1.3.1
 sounddevice==0.4.6
@@ -173,13 +181,15 @@ spacy-loggers==1.0.5
 SQLAlchemy==2.0.30
 srsly==2.4.8
 stack-data==0.6.3
-sympy==1.12
+sympy @ file:///C:/b/abs_82njkonm7f/croot/sympy_1701397685028/work
 tbb==2021.12.0
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 terminado==0.18.1
 thinc==8.2.3
+thop==0.1.1.post2209072238
 threadpoolctl==3.5.0
+tifffile==2024.5.22
 timm==0.9.16
 tinycss2==1.3.0
 tomli==2.0.1
@@ -187,14 +197,15 @@ torch==2.1.1
 torchaudio==2.3.0
 torchvision==0.16.1
 tornado==6.4
-tqdm==4.66.4
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1714854870413/work
 traitlets==5.14.3
 typer==0.9.4
 types-python-dateutil==2.9.0.20240316
-typing_extensions==4.11.0
+typing_extensions @ file:///C:/b/abs_0as9mdbkfl/croot/typing_extensions_1715268906610/work
 tzdata==2024.1
+ultralytics==8.2.24
 uri-template==1.3.0
-urllib3==2.2.1
+urllib3 @ file:///C:/b/abs_8e4z8_gh1l/croot/urllib3_1715636317140/work
 waitress==3.0.0
 wasabi==1.1.2
 wcwidth==0.2.13
@@ -203,6 +214,5 @@ webcolors==1.13
 webencodings==0.5.1
 websocket-client==1.8.0
 Werkzeug==3.0.3
-wheel==0.43.0
 widgetsnbextension==4.0.10
-win-inet-pton==1.1.0
+win-inet-pton @ file:///C:/ci_310/win_inet_pton_1642658466512/work

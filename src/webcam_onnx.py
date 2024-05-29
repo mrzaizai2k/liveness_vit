@@ -2,36 +2,28 @@ import sys
 sys.path.append("")
 
 import cv2
-import numpy as np
-import onnxruntime
-import uuid 
+import time
 from src.Utils.utils import *
-from src.Utils.inference_utils import *
+from src.face_detector import FaceDetection
 from src.model import VisionTransformerModel, ResnetModel
-
-# Set device
 
 
 # Load the Caffe model for face detection
-face_detector = FaceDetection(model_config_path="config/face_detection.yml")
+face_detector = FaceDetection.create(backend='yolo', model_config_path="config/face_detection.yml")
 liveness_model = VisionTransformerModel(model_config_path="config/vit_inference.yml")
-# model = VisionTransformerModel(model_config=config)
-# model = ResnetModel(model_config_path="config/resnet_inference.yml")
-
 
 # Initialize webcam
 cap = cv2.VideoCapture("image_test/vid2.mp4")
   
 while True:
-    try:
-        face_locations =[] 
-        ret, frame = cap.read()
+    face_locations =[] 
+    ret, frame = cap.read()
 
-        if not ret:
-            continue        
+    if not ret:
+        continue        
 
-        face_locations, frame = face_detector.predict(frame)
-
+    face_locations, frame = face_detector.predict(frame)
+    if face_locations:
         for startX, startY, endX, endY in face_locations:
 
             start_time = time.time()
@@ -39,8 +31,8 @@ while True:
             refined =  refine([[startX, startY, endX, endY]], max_height=frame.shape[0], max_width=frame.shape[1])[0]
             startX, startY, endX, endY = refined[:4].astype(int)
             face = frame[startY:endY, startX:endX]
+
             pred_class , prob = liveness_model.predict(face)
-            # print("prob", prob)
 
             draw_image(frame, pred_class=pred_class, prob=prob, location=[startX, startY, endX, endY])
             
@@ -57,8 +49,7 @@ while True:
         cv2.imshow('Frame', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    except Exception as e:
-        print("error", e)
+
 
 # Release the capture
 cap.release()

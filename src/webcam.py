@@ -8,20 +8,19 @@ from PIL import Image
 import timm
 import torch
 from torchvision import  transforms
+from src.face_detector import FaceDetection
 
 from src.Utils.utils import *
 
-model_dir = "models/liveness/weights/vit_teacher_tune_zalo.pth"
+model_dir = "models/liveness/weights/vit_teacher_tune_29_may.pth"
 img_height = 224
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
-# Load the Caffe model for face detection
-caffe_model = "models/face_detector/deploy.prototxt"
-caffe_weights = "models/face_detector/res10_300x300_ssd_iter_140000.caffemodel"
-net = cv2.dnn.readNetFromCaffe(caffe_model, caffe_weights)
+face_detector = FaceDetection.create(backend='yolo', model_config_path="config/face_detection.yml")
+
 
 # Load the ViT model with specified weights
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
@@ -41,57 +40,20 @@ cap = cv2.VideoCapture("image_test/vid.mp4")
 
 while True:
     try: 
+        face_locations =[] 
         ret, frame = cap.read()
 
         if not ret:
-            continue
+            continue        
 
-        # frame = imutils.resize(frame, height=480, width=640)
-        frame = cv2.resize(frame, (640,480))
-
-        # grab the frame dimensions and convert it to a blob
-        (h, w) = frame.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
-            (300, 300), (104.0, 177.0, 123.0))
-
-        # pass the blob through the network and obtain the detections and
-        # predictions
-        net.setInput(blob)
-        detections = net.forward()
-
-        if not detections.shape[2] > 0:
-            continue 
-
-        # loop over the detections
-        for i in range(0, detections.shape[2]):
-            # extract the confidence (i.e., probability) associated with the
-            # prediction
-            confidence = detections[0, 0, i, 2]
-
-            # filter out weak detections
-            if confidence > 0.8:
-                # compute the (x, y)-coordinates of the bounding box for
-                # the face and extract the face ROI
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                (startX, startY, endX, endY) = box.astype("int")
-
-                # ensure the detected bounding box does fall outside the
-                # dimensions of the frame
-                startX = max(0, startX)
-                startY = max(0, startY)
-                endX = min(w, endX)
-                endY = min(h, endY)
-
-                if abs(endX - startX) < 100 or abs(endY-startY)< 100:
-                    continue
+        face_locations, frame = face_detector.predict(frame)
+        if face_locations:
+            for startX, startY, endX, endY in face_locations:
 
                 start_time = time.time()
 
-                refined =  refine([[startX, startY, endX, endY]], max_height=480, max_width=640)[0]
-
+                refined =  refine([[startX, startY, endX, endY]], max_height=frame.shape[0], max_width=frame.shape[1])[0]
                 startX, startY, endX, endY = refined[:4].astype(int)
-                # extract the face ROI and then preproces it in the exact
-                # same manner as our training data
                 face = frame[startY:endY, startX:endX]
                 # cv2.imshow("Face", face)
 

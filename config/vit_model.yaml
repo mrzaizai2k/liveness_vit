@@ -3,10 +3,10 @@ PATIENCE: 3
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_tune_zalo.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_tune_29_may.pth
 RANDOM_SEED: 39
 
-train_dir: data/zalo/new_zalo
+train_dir: data/face_train
 val_dir: data/face_val
 test_dir: data/face_test
 

@@ -56,7 +56,8 @@ transform_flipped = transforms.Compose([
     transforms.CenterCrop(IMG_SIZE),
     transforms.TrivialAugmentWide(),
     transforms.RandomRotation(degrees= 20),
-    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
+    transforms.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+
     transforms.RandomHorizontalFlip(p=1),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
@@ -69,9 +70,9 @@ spoof_transforms = transforms.Compose([
     transforms.CenterCrop(IMG_SIZE),
     transforms.TrivialAugmentWide(),
     transforms.RandomRotation(degrees= 20),
-    transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+    transforms.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
     transforms.RandomHorizontalFlip(p=1),
-    transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
+    transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
     transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
@@ -146,11 +147,11 @@ model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretraine
 model.head = torch.nn.Linear(model.head.in_features, 2)
 trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
-model.load_state_dict(
-    torch.load(
-        "models/liveness/weights/vit_teacher_new_config_siw.pth"
-    )
-)
+# model.load_state_dict(
+#     torch.load(
+#         "models/liveness/weights/vit_teacher_new_config_siw.pth"
+#     )
+# )
 
 criterion = nn.CrossEntropyLoss()
 

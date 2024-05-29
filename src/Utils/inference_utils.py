@@ -6,6 +6,8 @@ import torch.nn as nn
 from torchvision import transforms
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+
 
 # Define the inference function
 def predict_image(img_bytes, model, transform, device):
@@ -80,3 +82,59 @@ def preprocess_image(image, target_size=224, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5
     image = np.transpose(image, (2, 0, 1))
 
     return image
+
+def show_img(img):
+    img = np.asarray(img)
+    plt.figure(figsize=(10, 10))
+    plt.imshow(img)
+    plt.axis('off')
+    plt.show()
+
+
+def show_img2(img1, img2, alpha=0.8):
+    img1 = np.asarray(img1)
+    img2 = np.asarray(img2)
+    plt.figure(figsize=(10, 10))
+    plt.imshow(img1)
+    plt.imshow(img2, alpha=alpha)
+    plt.axis('off')
+    plt.show()
+
+def show_img2_vid(img1, img2, alpha=0.2):
+    # Ensure img1 is 3-channel and img2 is 1-channel
+    img1 = np.asarray(img1)
+    img1 = img1[:,:,1]
+    img2 = np.asarray(img2)
+
+
+    # Normalize img2 to [0, 1] range and scale it according to alpha
+    img2_normalized = (img2 - np.min(img2)) / (np.max(img2) - np.min(img2))
+    img2_scaled = img2_normalized * (3 * alpha)
+
+    # Overlay img2 on img1 with alpha blending
+    blended_img = cv2.addWeighted(img1, alpha, img2_scaled, 1-alpha, 0)
+    
+
+    # combined = cv2.addWeighted(img1, alpha, img2, 1 - alpha, 0)
+    cv2.imshow('attention map', blended_img)
+    # return combined
+
+
+def my_forward_wrapper(attn_obj):
+    def my_forward(x):
+        B, N, C = x.shape
+        qkv = attn_obj.qkv(x).reshape(B, N, 3, attn_obj.num_heads, C // attn_obj.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)   # make torchscript happy (cannot use tensor as tuple)
+
+        attn = (q @ k.transpose(-2, -1)) * attn_obj.scale
+        attn = attn.softmax(dim=-1)
+        attn = attn_obj.attn_drop(attn)
+        attn_obj.attn_map = attn
+        attn_obj.cls_attn_map = attn[:, :, 0, 2:]
+
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        x = attn_obj.proj(x)
+        x = attn_obj.proj_drop(x)
+        return x
+    return my_forward
+

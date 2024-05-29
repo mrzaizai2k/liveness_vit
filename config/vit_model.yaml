@@ -1,9 +1,9 @@
 EPOCHS: 500
-PATIENCE: 3
+PATIENCE: 30
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_tune_29_may.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_tune_29_may_2.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -35,3 +35,12 @@ test_dir: data/face_test
 # far: 0.0%
 # frr: 0.9000900090009001%
 # hter: 0.45004500450045004%
+
+# vit 19 epoch
+# EarlyStopping counter: 30 out of 30
+# Early stopping after 39 Epochs
+# test acc: 88.46846846846846%
+# recall: 71.1971197119712%
+# far: 0.0%
+# frr: 28.802880288028803%
+# hter: 14.401440144014401%

@@ -1,9 +1,9 @@
 EPOCHS: 500
-PATIENCE: 30
+PATIENCE: 10
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_tune_29_may_2.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_zalo.pth
 RANDOM_SEED: 39
 
 train_dir: data/face_train
@@ -44,3 +44,13 @@ test_dir: data/face_test
 # far: 0.0%
 # frr: 28.802880288028803%
 # hter: 14.401440144014401%
+
+# zalo data
+# [ 11/500] Loss: 0.02798 | F1-score: 0.990 | Acc: 0.991 | Val Loss: 0.252 | Val F1: 0.845 | Val Acc: 0.943 | 04:21:27s | Grad: 2.62391
+# EarlyStopping counter: 10 out of 10
+# Early stopping after 11 Epochs
+# test acc: 95.31279178338002%
+# recall: 93.43096234309624%
+# far: 3.170320404721754%
+# frr: 6.569037656903766%
+# hter: 4.86967903081276%

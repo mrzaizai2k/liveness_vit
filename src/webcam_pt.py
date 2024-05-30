@@ -19,7 +19,7 @@ from src.Utils.utils import *
 
 
 
-model_dir = 'models/liveness/weights/resnet50_siw_new_config.pth' 
+model_dir = 'models/liveness/weights/resnet50_zalo_new_config.pth' 
 img_height = 224
 
 # Check if CUDA is available and set the device

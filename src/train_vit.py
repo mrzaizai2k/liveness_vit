@@ -56,31 +56,31 @@ transform_original = v2.Compose([
 ])
 
 transform_flipped = v2.Compose([
-    v2.TrivialAugmentWide(),
+    # v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
     v2.CenterCrop(IMG_SIZE),
     v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
-    v2.RandomHorizontalFlip(p=1),
-    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
-    v2.RandomGrayscale(p=0.1),
+    v2.RandomHorizontalFlip(p=0.1),
+    # v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    # v2.RandomGrayscale(p=0.1),
     v2.ToTensor(),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    v2.RandomErasing(p=0.1),
+    # v2.RandomErasing(p=0.1),
 ])
 
 spoof_transforms = v2.Compose([
-    v2.TrivialAugmentWide(),
+    # v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
     v2.CenterCrop(IMG_SIZE),
     v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
-    v2.RandomHorizontalFlip(p=1),
-    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
-    v2.RandomGrayscale(p=0.1),
+    v2.RandomHorizontalFlip(p=0.1),
+    # v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    # v2.RandomGrayscale(p=0.1),
     v2.ToTensor(),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    v2.RandomErasing(p=0.1),
+    # v2.RandomErasing(p=0.1),
 ])
 
 
@@ -154,7 +154,7 @@ model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.5)
 scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=10)
 scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, T_max=490, eta_min=learning_rate/100)
 scheduler_lr = lr_scheduler.SequentialLR(optimizer, [scheduler_linear,scheduler_cosine],milestones=[10])

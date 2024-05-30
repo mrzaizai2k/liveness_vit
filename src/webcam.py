@@ -16,7 +16,7 @@ from src.Utils.inference_utils import *
 
 
 
-model_dir = "models/liveness/weights/vit_teacher_new_config_siw.pth"
+model_dir = "models/liveness/weights/vit_teacher_zalo_add_aug.pth"
 img_height= 224
 
 map_size = int(np.sqrt(196))
@@ -42,7 +42,7 @@ print("data_config", data_config)
 transform_original = timm.data.create_transform(**data_config, is_training=False)
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/video1.mp4")
+cap = cv2.VideoCapture("image_test/vid.mp4")
 
 while True:
     # try: 

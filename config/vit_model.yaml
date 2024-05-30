@@ -3,7 +3,7 @@ PATIENCE: 10
 BATCH_SIZE: 16
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_zalo_30_may.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_zalo_light_config.pth
 RANDOM_SEED: 39
 NUM_CLASSES: 2
 
@@ -55,3 +55,14 @@ test_dir: data/face_test
 # far: 3.170320404721754%
 # frr: 6.569037656903766%
 # hter: 4.86967903081276%
+
+
+# zalo light config
+# [ 11/500] Loss: 0.02454 | F1-score: 0.993 | Acc: 0.993 | Val Loss: 0.378 | Val F1: 0.863 | Val Acc: 0.923 | 04:14:42s | Grad: 2.69495
+# EarlyStopping counter: 10 out of 10
+# Early stopping after 11 Epochs
+# test acc: 96.937441643324%
+# recall: 96.86192468619247%
+# far: 3.0016863406408096%
+# frr: 3.1380753138075312%
+# hter: 3.0698808272241704%

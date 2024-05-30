@@ -14,6 +14,7 @@ import timm
 from timm.models.layers import trunc_normal_
 from ellzaf_ml.tools import EarlyStopping
 from  torchvision.transforms import InterpolationMode 
+from torchvision.transforms import v2
 
 from src.Utils.utils import *
 from src.Utils.train import *
@@ -28,6 +29,7 @@ learning_rate = vit_config['learning_rate']
 IMG_SIZE = vit_config['IMG_SIZE']
 MODEL_DIR = vit_config['MODEL_DIR']
 RANDOM_SEED = vit_config['RANDOM_SEED']
+NUM_CLASSES = vit_config['NUM_CLASSES']
 
 train_dir = vit_config['train_dir']
 val_dir = vit_config['val_dir']
@@ -42,41 +44,43 @@ print(f"Using {device} device")
 
 device = torch.device(device)
 
+# cutmix = v2.CutMix(num_classes=NUM_CLASSES)
+# mixup = v2.MixUp(num_classes=NUM_CLASSES)
+# cutmix_or_mixup = v2.RandomChoice([cutmix, mixup])
 
-transform_original = transforms.Compose([
-    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
-    transforms.CenterCrop(IMG_SIZE),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+transform_original = v2.Compose([
+    v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    v2.CenterCrop(IMG_SIZE),
+    v2.ToTensor(),
+    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 ])
 
-transform_flipped = transforms.Compose([
-    transforms.RandomRotation(degrees= 20),
-    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
-    transforms.CenterCrop(IMG_SIZE),
-    transforms.TrivialAugmentWide(),
-    transforms.RandomRotation(degrees= 20),
-    transforms.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
-
-    transforms.RandomHorizontalFlip(p=1),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    transforms.RandomErasing(p=0.1),
+transform_flipped = v2.Compose([
+    v2.TrivialAugmentWide(),
+    v2.RandomRotation(degrees= 20),
+    v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    v2.CenterCrop(IMG_SIZE),
+    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.RandomHorizontalFlip(p=1),
+    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    v2.RandomGrayscale(p=0.1),
+    v2.ToTensor(),
+    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    v2.RandomErasing(p=0.1),
 ])
 
-spoof_transforms = transforms.Compose([
-    transforms.RandomRotation(degrees= 20),
-    transforms.Resize(232, interpolation=InterpolationMode.BICUBIC,),
-    transforms.CenterCrop(IMG_SIZE),
-    transforms.TrivialAugmentWide(),
-    transforms.RandomRotation(degrees= 20),
-    transforms.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
-    transforms.RandomHorizontalFlip(p=1),
-    transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
-    transforms.RandomGrayscale(p=0.1),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    transforms.RandomErasing(p=0.1),
+spoof_transforms = v2.Compose([
+    v2.TrivialAugmentWide(),
+    v2.RandomRotation(degrees= 20),
+    v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    v2.CenterCrop(IMG_SIZE),
+    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.RandomHorizontalFlip(p=1),
+    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    v2.RandomGrayscale(p=0.1),
+    v2.ToTensor(),
+    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    v2.RandomErasing(p=0.1),
 ])
 
 
@@ -90,19 +94,13 @@ train_data_combined = ConcatDataset([train_orig, train_flip])
 train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True)
 
 val_orig = datasets.ImageFolder(val_dir, transform=transform_original)
-val_flip = CustomDataset(root=val_dir,
-                           general_augment_transform=transform_flipped,
-                           special_augment_transform=spoof_transforms,
-                           special_classes=['fake'])
-
-val_data_combined = ConcatDataset([val_orig, val_flip])
-val_loader = DataLoader(val_data_combined, batch_size=BATCH_SIZE, shuffle=False)
+val_loader = DataLoader(val_orig, batch_size=BATCH_SIZE, shuffle=False)
 
 test_orig = datasets.ImageFolder(test_dir, transform=transform_original)
 test_loader = DataLoader(test_orig, batch_size=BATCH_SIZE, shuffle=False)
 
 
-print(len(train_data_combined),len(val_data_combined),len(test_orig))
+print(len(train_data_combined),len(val_orig),len(test_orig))
 
 def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler_lr=None):
     model.train()
@@ -110,6 +108,7 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
 
     for idx, (train_x_data, train_y_data) in enumerate(train_loader):
         train_x_data, train_y_data = train_x_data.to(device), train_y_data.to(device)
+        # train_x_data, train_y_data = cutmix_or_mixup( train_x_data, train_y_data)
         optimizer.zero_grad()
         y_pred = model(train_x_data)
 
@@ -144,7 +143,7 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
 
 
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
-model.head = torch.nn.Linear(model.head.in_features, 2)
+model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
 # model.load_state_dict(
@@ -190,7 +189,7 @@ for e in range(1, EPOCHS + 1):
         break
 
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
-model.head = torch.nn.Linear(model.head.in_features, 2)
+model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 model = model.to(device)
 model.load_state_dict(
     torch.load(

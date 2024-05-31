@@ -174,3 +174,4 @@ weights/
 data/
 logs/
 *.log
+wandb/

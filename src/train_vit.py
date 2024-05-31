@@ -19,6 +19,7 @@ from torchvision.transforms import v2
 from src.Utils.utils import *
 from src.Utils.train import *
 from src.dataset import CustomDataset
+import wandb
 
 vit_config_path = 'config/vit_model.yaml'
 vit_config = read_config(path = vit_config_path)
@@ -30,10 +31,23 @@ IMG_SIZE = vit_config['IMG_SIZE']
 MODEL_DIR = vit_config['MODEL_DIR']
 RANDOM_SEED = vit_config['RANDOM_SEED']
 NUM_CLASSES = vit_config['NUM_CLASSES']
+WEIGHT_DECAY = vit_config['WEIGHT_DECAY']
+LR_WARMUP = vit_config['LR_WARMUP']
 
 train_dir = vit_config['train_dir']
 val_dir = vit_config['val_dir']
 test_dir = vit_config['test_dir']
+
+# start a new wandb run to track this script
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="liveness_vit",
+    notes=vit_config['notes'],
+    tags=vit_config['tags'],
+    # track hyperparameters and run metadata
+    config=vit_config
+)
+
 
 EPOCH_LEN = len(str(EPOCHS))
 torch.manual_seed(RANDOM_SEED)
@@ -56,31 +70,33 @@ transform_original = v2.Compose([
 ])
 
 transform_flipped = v2.Compose([
-    # v2.TrivialAugmentWide(),
+    v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
     v2.CenterCrop(IMG_SIZE),
-    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.ColorJitter(brightness=(-0.1,0.1), contrast=(-0.1,0.1)), #, saturation=0.5),
     v2.RandomHorizontalFlip(p=0.1),
-    # v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
-    # v2.RandomGrayscale(p=0.1),
+    v2.RandomVerticalFlip(p=0.1),
+    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    v2.RandomGrayscale(p=0.1),
     v2.ToTensor(),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    # v2.RandomErasing(p=0.1),
+    v2.RandomErasing(p=0.1),
 ])
 
 spoof_transforms = v2.Compose([
-    # v2.TrivialAugmentWide(),
+    v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
     v2.CenterCrop(IMG_SIZE),
-    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.ColorJitter(brightness=(-0.1,0.1), contrast=(-0.1,0.1)), #, saturation=0.5),
     v2.RandomHorizontalFlip(p=0.1),
-    # v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
-    # v2.RandomGrayscale(p=0.1),
+    v2.RandomVerticalFlip(p=0.1),
+    v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
+    v2.RandomGrayscale(p=0.1),
     v2.ToTensor(),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    # v2.RandomErasing(p=0.1),
+    v2.RandomErasing(p=0.1),
 ])
 
 
@@ -102,7 +118,7 @@ test_loader = DataLoader(test_orig, batch_size=BATCH_SIZE, shuffle=False)
 
 print(len(train_data_combined),len(val_orig),len(test_orig))
 
-def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler_lr=None):
+def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None, device = 'cpu'):
     model.train()
     total_loss, total_f1, total_correct, total_samples, total_grad = 0, 0, 0, 0, 0
 
@@ -128,10 +144,20 @@ def train_one_epoch(model, train_loader, device, optimizer, criterion, scheduler
         if idx % 10 == 0 and idx > 0:
             lr = optimizer.param_groups[0]['lr']
             print(
-                f'[{e:>{EPOCH_LEN}}/{EPOCHS:>{EPOCH_LEN}}] [{idx}/{len(train_loader)}] '
+                f'[{epoch:>{EPOCH_LEN}}/{EPOCHS:>{EPOCH_LEN}}] [{idx}/{len(train_loader)}] '
                 f'lr {lr:.10f} | loss {loss:.10f} ({total_loss/idx:.4f}) | '
                 f'grad_norm {grad_norm:.4f} ({total_grad/idx:.4f}) | '
             )
+
+            wandb.log({
+                "epoch": epoch,
+                "batch": idx,
+                "lr": lr,
+                "loss": loss.item(),
+                "avg_loss": total_loss / idx,
+                "grad_norm": grad_norm,
+                "avg_grad_norm": total_grad / idx
+            })
 
     if scheduler_lr:
         scheduler_lr.step()
@@ -154,8 +180,8 @@ model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.5)
-scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=10)
+optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay = WEIGHT_DECAY)
+scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=LR_WARMUP)
 scheduler_cosine = lr_scheduler.CosineAnnealingLR(optimizer, T_max=490, eta_min=learning_rate/100)
 scheduler_lr = lr_scheduler.SequentialLR(optimizer, [scheduler_linear,scheduler_cosine],milestones=[10])
 
@@ -166,26 +192,31 @@ early_stopping = EarlyStopping(
                 )
 
 start_time = time.time()
-for e in range(1, EPOCHS + 1):
-    avg_loss_train, avg_f1_train, avg_accuracy_train, avg_grad = train_one_epoch(model, train_loader, device,
-                                                                           optimizer, criterion, scheduler_lr)
-    avg_loss_val, avg_f1_val, avg_accuracy_val = validate_one_epoch(model, val_loader, device, criterion)
+for epoch in range(1, EPOCHS + 1):
+    avg_loss_train, avg_f1_train, avg_accuracy_train, avg_grad = train_one_epoch(model=model, train_loader=train_loader, device=device, 
+                                                                           optimizer=optimizer, criterion=criterion, scheduler_lr=scheduler_lr)
+    avg_loss_val, avg_f1_val, avg_accuracy_val = validate_one_epoch(model=model, val_loader=val_loader, device=device, criterion=criterion)
 
     time_taken = time.time() - start_time
     time_format = time.strftime("%H:%M:%S", time.gmtime(time_taken))
 
     print(
-    f"[{e:>{EPOCH_LEN}}/{EPOCHS:>{EPOCH_LEN}}] Loss: {avg_loss_train:.5f} | "
+    f"[{epoch:>{EPOCH_LEN}}/{EPOCHS:>{EPOCH_LEN}}] Loss: {avg_loss_train:.5f} | "
     + f"F1-score: {avg_f1_train:.3f} | Acc: {avg_accuracy_train:.3f} | "
     + f"Val Loss: {avg_loss_val:.3f} | Val F1: {avg_f1_val:.3f} | "
     + f"Val Acc: {avg_accuracy_val:.3f} | {time_format}s | "
     + f"Grad: {avg_grad:.5f}"
     )
-
+    wandb.log({
+        "epoch": epoch,
+        "avg_loss_val": avg_loss_val,
+        "avg_f1_val": avg_f1_val,
+        "accuracy_val": avg_accuracy_val
+    })
 
     early_stopping(avg_loss_val, model)
     if early_stopping.early_stop:
-        print(f"Early stopping after {e} Epochs")
+        print(f"Early stopping after {epoch} Epochs")
         break
 
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
@@ -198,4 +229,4 @@ model.load_state_dict(
 )
 model.eval()
 
-evaluate_model(model, test_loader, device=device)
+evaluate_model(model, test_loader, wandb=wandb, device=device)

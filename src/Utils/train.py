@@ -42,7 +42,7 @@ def validate_one_epoch(model, val_loader, device, criterion, scheduler_lr=None):
     return avg_loss, avg_f1, accuracy
 
 
-def evaluate_model(model, test_loader, device='cpu'):
+def evaluate_model(model, test_loader, wandb, device='cpu'):
 
     with torch.no_grad():
         correct = 0
@@ -76,3 +76,11 @@ def evaluate_model(model, test_loader, device='cpu'):
         print(f"far: {far * 100}%")
         print(f"frr: {frr * 100}%")
         print(f"hter: {hter * 100}%")
+
+        wandb.log({
+            "test_accuracy": accuracy * 100,
+            "recall": recall * 100,
+            "false_acceptance_rate": far * 100,
+            "false_rejection_rate": frr * 100,
+            "half_total_error_rate": hter * 100
+        })

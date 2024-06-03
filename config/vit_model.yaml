@@ -1,17 +1,17 @@
-notes: add zalo data test
+notes: Increase weight decay
 tags:
   - vit
-  - zalo data
+  - large data
 
 EPOCHS: 500
-PATIENCE: 10
-BATCH_SIZE: 16
+PATIENCE: 3
+BATCH_SIZE: 32
 learning_rate: 0.00003
 IMG_SIZE: 224
-MODEL_DIR: models/liveness/weights/vit_teacher_add_data.pth
+MODEL_DIR: models/liveness/weights/vit_teacher_rm_unlabeled.pth
 RANDOM_SEED: 39
 NUM_CLASSES: 2
-WEIGHT_DECAY: 0.01
+WEIGHT_DECAY: 0.5
 LR_WARMUP: 10
 
 

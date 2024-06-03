@@ -5,15 +5,17 @@ import pandas as pd
 import os
 import numpy as np
 from src.Utils.utils import *
+import tqdm
+
 from src.face_detector import FaceDetection
 
 # Load CSV file
-csv_path = 'data/zalo/train/train/label.csv'
+csv_path = 'data/zalo/public_test_2/public_test_2.csv'
 df = pd.read_csv(csv_path)
 
 # Directories
-video_root = 'data/zalo/train/train/videos/'
-output_root = 'data/zalo/new_zalo_yolo'
+video_root = 'data/zalo/public_test_2/public_test_2/videos'
+output_root = 'data/zalo/zalo_public_test_2'
 fake_dir = os.path.join(output_root, 'fake')
 real_dir = os.path.join(output_root, 'real')
 
@@ -56,9 +58,18 @@ def save_faces_from_video(video_path, label, net, save_dir, frames_per_second=5)
 
 
 for idx, row in df.iterrows():
+    # if idx == 5:
+    #     break  # Remove this if you want to process all videos
+
     fname = row['fname']
     print("Processing video:", fname)
-    label = 'real' if row['liveness_score'] == 1 else 'fake'
+    if row['liveness_score'] >= 0.8:
+        label = 'real' 
+    elif row['liveness_score'] <= 0.2:
+        label = 'fake'
+    else: 
+        continue
+
     video_path = os.path.join(video_root, fname)
     save_dir_base = real_dir if label == 'real' else fake_dir
 
@@ -68,8 +79,7 @@ for idx, row in df.iterrows():
 
     save_faces_from_video(video_path, label, face_detector, save_dir)
     
-    # if idx == 5:
-    #     break  # Remove this if you want to process all videos
+
     if idx % 10 == 0:
         print("Processed videos:", idx)
 

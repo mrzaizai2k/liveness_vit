@@ -16,7 +16,7 @@ from src.Utils.inference_utils import *
 
 
 
-model_dir = "models/liveness/weights/vit_teacher_zalo_add_aug.pth"
+model_dir = "models/liveness/weights/vit_teacher_rm_unlabeled.pth"
 img_height= 224
 
 map_size = int(np.sqrt(196))

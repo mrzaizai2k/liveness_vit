@@ -10,7 +10,7 @@ from waitress import serve
 from src.Utils.utils import *
 from src.Utils.inference_utils import *
 from src.model import VisionTransformerModel, ResnetModel
-
+from face_detector import FaceDetection
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
@@ -30,7 +30,7 @@ connection_config_path = "config/connection.yml"
 
 connection_config = read_config(path=connection_config_path)
 model = VisionTransformerModel(model_config_path=model_config_path)
-face_detector = FaceDetection(model_config_path="config/face_detection.yml")
+face_detector = FaceDetection.create(backend='yolo', model_config_path="config/face_detection.yml")
 
 
 @app.route("/")

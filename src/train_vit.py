@@ -33,6 +33,7 @@ RANDOM_SEED = vit_config['RANDOM_SEED']
 NUM_CLASSES = vit_config['NUM_CLASSES']
 WEIGHT_DECAY = vit_config['WEIGHT_DECAY']
 LR_WARMUP = vit_config['LR_WARMUP']
+CLIP_GRAD_NORM = vit_config['CLIP_GRAD_NORM']
 
 train_dir = vit_config['train_dir']
 val_dir = vit_config['val_dir']
@@ -130,7 +131,7 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
 
         loss = criterion(y_pred, train_y_data)
         loss.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 5.)
+        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), CLIP_GRAD_NORM)
         optimizer.step()
 
         _, y_pred_max = torch.max(y_pred, dim=1)

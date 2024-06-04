@@ -184,7 +184,7 @@ if __name__ == "__main__":
     root_url = "http://127.0.0.1:8090" #Bao
     test_liveness_bytes_api(img_path=img_path, root_url=root_url, face_detect=True)
     test_liveness_base64_api(img_path=img_path, root_url=root_url, face_detect=True)
-    concurrent_face_recognition(img_path=img_path, root_url=root_url, face_detect=True, num_images=50)
+    # concurrent_face_recognition(img_path=img_path, root_url=root_url, face_detect=True, num_images=50)
     check_api_health(root_url=root_url)
     # concurrent_healthcheck(root_url='http://127.0.0.1:8090', num_images=50)
 

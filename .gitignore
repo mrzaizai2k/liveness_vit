@@ -175,3 +175,4 @@ data/
 logs/
 *.log
 wandb/
+*.jmx

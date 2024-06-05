@@ -99,8 +99,12 @@ class LivenessModel:
             tuple: Tuple containing predicted class and probabilities.
         """
         image = self.preprocess(image)
-        ort_inputs = {self.input_name: image[np.newaxis, :]}
-        pred_class , prob = self._predict_onnx(ort_inputs=ort_inputs)
+        try:
+            ort_inputs = {self.input_name: image[np.newaxis, :]}
+            pred_class , prob = self._predict_onnx(ort_inputs=ort_inputs)
+        except:
+            ort_inputs = {self.input_name: image.astype(np.float16)[np.newaxis, :]}
+            pred_class , prob = self._predict_onnx(ort_inputs=ort_inputs)
         return pred_class , prob 
 
 class VisionTransformerModel(LivenessModel):

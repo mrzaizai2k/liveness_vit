@@ -212,3 +212,41 @@ def draw_image(frame, pred_class, prob, location):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
         
     return frame
+
+def rename_model(model_dir:str='models/liveness/weights', prefix:str="vit"):
+  """
+  Adds a prefix with date (YYYY_mm_dd) and sequential ID to filenames in a directory.
+
+  Args:
+    model_dir (str): Path to the directory containing models.
+    prefix (str, optional): Prefix to add before the date and ID (default: "vit_teacher").
+
+  Returns:
+    str: The final model filename with prefix and ID.
+  """
+
+  # Get the model directory path (from config if available, otherwise use the provided path)
+
+  # Ensure the directory exists
+  if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+
+  # Get today's date in YYYY_mm_dd format
+  today_str = datetime.now().strftime("%Y_%m_%d")
+
+  # Start with ID 1
+  id = 1
+
+  # Construct the base filename with prefix and date
+  base_filename = f"{prefix}_{today_str}"
+
+  while True:
+    # Build the full filename with ID
+    filename = f"{base_filename}_{id}.pth"
+
+    # Check if the file already exists
+    if not os.path.exists(os.path.join(model_dir, filename)):
+      return os.path.join(model_dir, filename)
+
+    # Increment ID for next attempt
+    id += 1

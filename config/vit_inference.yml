@@ -1,4 +1,4 @@
-MODEL_DIR: models/liveness/weights/vit_teacher_new_config_siw.onnx
+MODEL_DIR: models/liveness/weights/vit_teacher_4_may_3_half.onnx
 target_resize: 224
 target_crop: 224
 mean: [0.5, 0.5, 0.5]

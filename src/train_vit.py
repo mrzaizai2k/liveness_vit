@@ -3,23 +3,26 @@ sys.path.append("")
 
 import torch
 from torch import nn
-from torchvision import datasets, transforms
+from torchvision import datasets
 from torch.utils.data import DataLoader, ConcatDataset
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-import numpy as np
 import time
+import wandb
+
 from sklearn.metrics import f1_score
 import timm
 from timm.models.layers import trunc_normal_
 from ellzaf_ml.tools import EarlyStopping
 from  torchvision.transforms import InterpolationMode 
 from torchvision.transforms import v2
+from torch.utils.data import default_collate
 
 from src.Utils.utils import *
 from src.Utils.train import *
 from src.dataset import CustomDataset
-import wandb
+
+
 
 vit_config_path = 'config/vit_model.yaml'
 vit_config = read_config(path = vit_config_path)
@@ -28,12 +31,16 @@ PATIENCE = vit_config['PATIENCE']
 BATCH_SIZE = vit_config['BATCH_SIZE']
 learning_rate = vit_config['learning_rate']
 IMG_SIZE = vit_config['IMG_SIZE']
-MODEL_DIR = vit_config['MODEL_DIR']
 RANDOM_SEED = vit_config['RANDOM_SEED']
 NUM_CLASSES = vit_config['NUM_CLASSES']
 WEIGHT_DECAY = vit_config['WEIGHT_DECAY']
 LR_WARMUP = vit_config['LR_WARMUP']
 CLIP_GRAD_NORM = vit_config['CLIP_GRAD_NORM']
+
+MODEL_DIR = vit_config['MODEL_DIR']
+MODEL_DIR = rename_model(model_dir = MODEL_DIR, prefix='vit')
+vit_config['MODEL_DIR'] = MODEL_DIR
+
 
 train_dir = vit_config['train_dir']
 val_dir = vit_config['val_dir']
@@ -43,6 +50,7 @@ test_dir = vit_config['test_dir']
 wandb.init(
     # set the wandb project where this run will be logged
     project="liveness_vit",
+    name= os.path.splitext(os.path.basename(MODEL_DIR))[0],
     notes=vit_config['notes'],
     tags=vit_config['tags'],
     # track hyperparameters and run metadata
@@ -59,9 +67,14 @@ print(f"Using {device} device")
 
 device = torch.device(device)
 
-# cutmix = v2.CutMix(num_classes=NUM_CLASSES)
-# mixup = v2.MixUp(num_classes=NUM_CLASSES)
-# cutmix_or_mixup = v2.RandomChoice([cutmix, mixup])
+cutmix = v2.CutMix(num_classes=NUM_CLASSES)
+mixup = v2.MixUp(num_classes=NUM_CLASSES)
+cutmix_or_mixup = v2.RandomChoice([cutmix, mixup], p=0.5)
+
+def collate_fn(batch):
+    return cutmix_or_mixup(*default_collate(batch))
+
+
 
 transform_original = v2.Compose([
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
@@ -108,7 +121,8 @@ train_flip = CustomDataset(root=train_dir,
                            special_classes=['fake']) # check this
 
 train_data_combined = ConcatDataset([train_orig, train_flip])
-train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True)
+train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True,
+                          collate_fn=collate_fn)
 
 val_orig = datasets.ImageFolder(val_dir, transform=transform_original)
 val_loader = DataLoader(val_orig, batch_size=BATCH_SIZE, shuffle=False)
@@ -135,11 +149,11 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
         optimizer.step()
 
         _, y_pred_max = torch.max(y_pred, dim=1)
-        f1_score_val = f1_score(train_y_data.cpu(), y_pred_max.cpu(), average="macro")
-        total_correct += (y_pred_max == train_y_data).sum().item()
+        # f1_score_val = f1_score(train_y_data.cpu(), y_pred_max.cpu(), average="macro")
+        # total_correct += (y_pred_max == train_y_data).sum().item()
         total_samples += train_y_data.size(0)
         total_loss += loss.item()
-        total_f1 += f1_score_val.item()
+        # total_f1 += f1_score_val.item()
         total_grad += grad_norm
 
         if idx % 10 == 0 and idx > 0:
@@ -163,10 +177,10 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
     if scheduler_lr:
         scheduler_lr.step()
     avg_loss = total_loss / len(train_loader)
-    avg_f1 = total_f1 / len(train_loader)
+    # avg_f1 = total_f1 / len(train_loader)
     avg_grad = total_grad / len(train_loader)
-    accuracy = total_correct / total_samples
-    return avg_loss, avg_f1, accuracy, avg_grad
+    # accuracy = total_correct / total_samples
+    return avg_loss, avg_grad #, avg_f1, accuracy, 
 
 
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
@@ -194,7 +208,7 @@ early_stopping = EarlyStopping(
 
 start_time = time.time()
 for epoch in range(1, EPOCHS + 1):
-    avg_loss_train, avg_f1_train, avg_accuracy_train, avg_grad = train_one_epoch(model=model, train_loader=train_loader, device=device, 
+    avg_loss_train, avg_grad = train_one_epoch(model=model, train_loader=train_loader, device=device, 
                                                                            optimizer=optimizer, criterion=criterion, scheduler_lr=scheduler_lr)
     avg_loss_val, avg_f1_val, avg_accuracy_val = validate_one_epoch(model=model, val_loader=val_loader, device=device, criterion=criterion)
 
@@ -203,7 +217,7 @@ for epoch in range(1, EPOCHS + 1):
 
     print(
     f"[{epoch:>{EPOCH_LEN}}/{EPOCHS:>{EPOCH_LEN}}] Loss: {avg_loss_train:.5f} | "
-    + f"F1-score: {avg_f1_train:.3f} | Acc: {avg_accuracy_train:.3f} | "
+    # + f"F1-score: {avg_f1_train:.3f} | Acc: {avg_accuracy_train:.3f} | "
     + f"Val Loss: {avg_loss_val:.3f} | Val F1: {avg_f1_val:.3f} | "
     + f"Val Acc: {avg_accuracy_val:.3f} | {time_format}s | "
     + f"Grad: {avg_grad:.5f}"

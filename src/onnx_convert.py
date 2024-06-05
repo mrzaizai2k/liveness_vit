@@ -39,10 +39,10 @@ print(f"Using {device} device")
 
 
 ########## ViT ########
-model_path = "models/liveness/weights/vit_teacher_new_config_siw.pth"
+model_path = "models/liveness/weights/vit_teacher_4_may_3.pth"
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
-model = model.to(device)
+model = model.half().to(device)
 model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
 model.eval()
 
@@ -58,7 +58,7 @@ img_path = 'image_test/realtwo.jpg'
 img = Image.open(img_path)
 img = transform_original(img)
 img = img.unsqueeze(0)
-img = img.to(device)
+img = img.half().to(device)
 print(img.shape)
 # 2. Load the model with specified weights
 
@@ -70,7 +70,7 @@ print("pred 1", pred)
 print("prob 1 ", prob)
 
 
-save_path = "models/liveness/weights/vit_teacher_new_config_siw.onnx"
+save_path = "models/liveness/weights/vit_teacher_4_may_3_half.onnx"
 
 # torch_out = model(img)
 
@@ -99,10 +99,16 @@ ort_session = onnxruntime.InferenceSession(save_path, providers=['CUDAExecutionP
 img = cv2.imread(img_path)
 img = preprocess_image(img)
 
-input_name = ort_session.get_inputs()[0].name
-ort_inputs = {input_name: img[np.newaxis, :]}
 
-pred_class, prob = predict_onnx(ort_session=ort_session, ort_inputs=ort_inputs)
+input_name = ort_session.get_inputs()[0].name
+try:
+    ort_inputs = {input_name: img[np.newaxis, :]}
+    pred_class, prob = predict_onnx(ort_session=ort_session, ort_inputs=ort_inputs)
+
+except:
+    ort_inputs = {input_name: img.astype(np.float16)[np.newaxis, :]}
+    pred_class, prob = predict_onnx(ort_session=ort_session, ort_inputs=ort_inputs)
+
 print("prob", prob)
 print("pred_class", pred_class)
 

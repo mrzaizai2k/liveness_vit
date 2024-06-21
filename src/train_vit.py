@@ -13,6 +13,7 @@ import wandb
 from sklearn.metrics import f1_score
 import timm
 from timm.models.layers import trunc_normal_
+from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from ellzaf_ml.tools import EarlyStopping
 from  torchvision.transforms import InterpolationMode 
 from torchvision.transforms import v2
@@ -69,7 +70,7 @@ device = torch.device(device)
 
 cutmix = v2.CutMix(num_classes=NUM_CLASSES)
 mixup = v2.MixUp(num_classes=NUM_CLASSES)
-cutmix_or_mixup = v2.RandomChoice([cutmix, mixup], p=0.5)
+cutmix_or_mixup = v2.RandomChoice([cutmix, mixup], p=[0.5, 0.5])
 
 def collate_fn(batch):
     return cutmix_or_mixup(*default_collate(batch))
@@ -183,17 +184,18 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
     return avg_loss, avg_grad #, avg_f1, accuracy, 
 
 
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k', pretrained=True)
 model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
-# model.load_state_dict(
-#     torch.load(
-#         "models/liveness/weights/vit_teacher_new_config_siw.pth"
-#     )
-# )
+model.load_state_dict(
+    torch.load(
+        "models/liveness/weights/vit_2024_06_06_4.pth"
+    )
+)
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+# criterion = SoftTargetCrossEntropy()
 
 optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay = WEIGHT_DECAY)
 scheduler_linear = lr_scheduler.LinearLR(optimizer, start_factor=0.01, total_iters=LR_WARMUP)
@@ -234,7 +236,7 @@ for epoch in range(1, EPOCHS + 1):
         print(f"Early stopping after {epoch} Epochs")
         break
 
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k', pretrained=True)
 model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 model = model.to(device)
 model.load_state_dict(

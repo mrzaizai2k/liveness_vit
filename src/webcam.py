@@ -17,11 +17,11 @@ from src.Utils.inference_utils import *
 
 
 # model_dir = "models/liveness/weights/vit_teacher_4_may_3.pth"
-model_dir = "models/liveness/weights/vit_2024_06_05_1.pth"
+model_dir = "models/liveness/weights/vit_2024_06_06_4.pth"
 
 img_height= 224
 
-map_size = int(np.sqrt(196))
+map_size = int(np.sqrt(49))
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,7 +31,7 @@ face_detector = FaceDetection.create(backend='yolo', model_config_path="config/f
 
 
 # Load the ViT model with specified weights
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
+model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
 model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))

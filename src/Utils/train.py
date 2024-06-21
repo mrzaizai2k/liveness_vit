@@ -42,8 +42,7 @@ def validate_one_epoch(model, val_loader, device, criterion, scheduler_lr=None):
     return avg_loss, avg_f1, accuracy
 
 
-def evaluate_model(model, test_loader, wandb, device='cpu'):
-
+def evaluate_model(model, test_loader, wandb = None, device='cpu', threshold=0.5):
     with torch.no_grad():
         correct = 0
         tp = 0
@@ -54,22 +53,21 @@ def evaluate_model(model, test_loader, wandb, device='cpu'):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            pred = output.argmax(dim=1, keepdim=True)
+            probs = torch.softmax(output, dim=1)  # Get probabilities
+            pred = (probs[:, 1] > threshold).int().view_as(target)  # Use threshold for prediction
 
-            tp += (pred.eq(1) & target.eq(1).view_as(pred)).sum().item()
-            tn += (pred.eq(0) & target.eq(0).view_as(pred)).sum().item()
-            fp += (pred.eq(1) & target.eq(0).view_as(pred)).sum().item()
-            fn += (pred.eq(0) & target.eq(1).view_as(pred)).sum().item()
+            tp += (pred.eq(1) & target.eq(1)).sum().item()
+            tn += (pred.eq(0) & target.eq(0)).sum().item()
+            fp += (pred.eq(1) & target.eq(0)).sum().item()
+            fn += (pred.eq(0) & target.eq(1)).sum().item()
 
-            correct += pred.eq(target.view_as(pred)).sum().item()
+            correct += pred.eq(target).sum().item()
 
         accuracy = correct / len(test_loader.dataset)
         far = fp / (fp + tn)
         frr = fn / (fn + tp)
-
         recall = tp / (tp + fn)
-
-        hter = (far + frr ) / 2
+        hter = (far + frr) / 2
 
         print(f"test acc: {accuracy * 100}%")
         print(f"recall: {recall * 100}%")
@@ -77,10 +75,18 @@ def evaluate_model(model, test_loader, wandb, device='cpu'):
         print(f"frr: {frr * 100}%")
         print(f"hter: {hter * 100}%")
 
-        wandb.log({
-            "test_accuracy": accuracy * 100,
-            "recall": recall * 100,
-            "false_acceptance_rate": far * 100,
-            "false_rejection_rate": frr * 100,
-            "half_total_error_rate": hter * 100
-        })
+        if not wandb:
+            return
+        
+        try:
+            wandb.log({
+                "test_accuracy": accuracy * 100,
+                "recall": recall * 100,
+                "false_acceptance_rate": far * 100,
+                "false_rejection_rate": frr * 100,
+                "half_total_error_rate": hter * 100
+            })
+        except Exception as e:
+            print(f"Error logging to wandb: {e}")
+
+        return 

@@ -15,13 +15,12 @@ from src.Utils.utils import *
 from src.Utils.inference_utils import *
 
 
-
 # model_dir = "models/liveness/weights/vit_teacher_4_may_3.pth"
-model_dir = "models/liveness/weights/vit_2024_06_06_4.pth"
+model_dir = "models/liveness/weights/vit_2024_07_03_2.pth"
 
 img_height= 224
 
-map_size = int(np.sqrt(49))
+map_size = int(np.sqrt(196))
 
 # Set device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,7 +30,7 @@ face_detector = FaceDetection.create(backend='yolo', model_config_path="config/f
 
 
 # Load the ViT model with specified weights
-model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k')
+model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
 model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))
@@ -44,7 +43,7 @@ print("data_config", data_config)
 transform_original = timm.data.create_transform(**data_config, is_training=False)
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/vid.mp4")
+cap = cv2.VideoCapture("image_test/real-dark.mp4")
 
 while True:
     # try: 
@@ -74,6 +73,7 @@ while True:
                 model.blocks[-1].attn.forward = my_forward_wrapper(model.blocks[-1].attn)
 
                 output = model(input_tensor)
+                softmax_output = F.softmax(output, dim=1)
 
                 attn_map = model.blocks[-1].attn.attn_map.mean(dim=1).squeeze(0).detach().cpu()
 
@@ -89,18 +89,26 @@ while True:
                 show_img2_vid(img_resized, cls_resized)
 
                 print("output ", output)
+                liveness_score = softmax_output[0][1].detach()
                 pred = output.argmax(dim=1, keepdim=True)
                 print("pred ", pred)
-                if pred[0][0] == 1:
+                if 0.8 < liveness_score < 1:
                     text = 'real'
                     color = (0,255,0)
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                    cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-                else:
+                    cv2.putText(frame, f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                elif 0 < liveness_score < 0.3:
                     text = 'fake'
                     color = (255,0,0)
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                    cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                    cv2.putText(frame,  f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+
+                else:
+                    text = 'unknown'
+                    color = (45, 255, 255)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+                    cv2.putText(frame,  f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                    
             
             end_time = time.time()
 

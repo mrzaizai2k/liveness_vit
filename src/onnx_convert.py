@@ -39,7 +39,7 @@ print(f"Using {device} device")
 
 
 ########## ViT ########
-model_path = "models/liveness/weights/vit_teacher_4_may_3.pth"
+model_path = "models/liveness/weights/vit_2024_07_02_1.pth"
 model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
 model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.half().to(device)
@@ -70,7 +70,7 @@ print("pred 1", pred)
 print("prob 1 ", prob)
 
 
-save_path = "models/liveness/weights/vit_teacher_4_may_3_half.onnx"
+save_path = "models/liveness/weights/vit_2024_07_02_1.onnx"
 
 # torch_out = model(img)
 

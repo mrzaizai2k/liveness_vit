@@ -1,4 +1,4 @@
-MODEL_DIR: models/liveness/weights/vit_teacher_4_may_3_half.onnx
+MODEL_DIR: models/liveness/weights/vit_2024_07_02_1.onnx
 target_resize: 224
 target_crop: 224
 mean: [0.5, 0.5, 0.5]

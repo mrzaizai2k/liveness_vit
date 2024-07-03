@@ -196,20 +196,38 @@ def sort_coordinates(coords):
 def draw_image(frame, pred_class, prob, location):
     
     startX, startY, endX, endY = location
-    if pred_class[0] == 1:
+    # if pred_class[0] == 1:
+    #     text = 'real'
+    #     color = (0,255,0)
+    #     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+    #     cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+    #     cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+    # else:
+    #     text = 'fake'
+    #     color = (255,0,0)
+    #     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+    #     cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+    #     cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+    liveness_score = prob[1]
+    if 0.8 < liveness_score < 1:
         text = 'real'
         color = (0,255,0)
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-        cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-        cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-    else:
+        cv2.putText(frame, f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        
+    elif 0 < liveness_score < 0.3:
         text = 'fake'
         color = (255,0,0)
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-        cv2.putText(frame, text, (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-        cv2.putText(frame, f"liveness prob: {round(100*prob[1], 2)}", (startX-10, startY-10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        cv2.putText(frame,  f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+
+    else:
+        text = 'unknown'
+        color = (45, 255, 255)
+        cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+        cv2.putText(frame,  f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
         
     return frame
 

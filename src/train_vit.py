@@ -21,9 +21,8 @@ from torch.utils.data import default_collate
 
 from src.Utils.utils import *
 from src.Utils.train import *
+from src.Utils.augment import *
 from src.dataset import CustomDataset
-
-
 
 vit_config_path = 'config/vit_model.yaml'
 vit_config = read_config(path = vit_config_path)
@@ -68,13 +67,13 @@ print(f"Using {device} device")
 
 device = torch.device(device)
 
+
 cutmix = v2.CutMix(num_classes=NUM_CLASSES)
 mixup = v2.MixUp(num_classes=NUM_CLASSES)
-cutmix_or_mixup = v2.RandomChoice([cutmix, mixup], p=[0.5, 0.5])
+cutmix_or_mixup = v2.RandomChoice([cutmix, mixup], p=[0.5, 0.2])
 
 def collate_fn(batch):
     return cutmix_or_mixup(*default_collate(batch))
-
 
 
 transform_original = v2.Compose([
@@ -84,17 +83,23 @@ transform_original = v2.Compose([
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 ])
 
+
 transform_flipped = v2.Compose([
     v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    v2.RandomResizedCrop(IMG_SIZE),
     v2.CenterCrop(IMG_SIZE),
-    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+    v2.RandomAdjustSharpness(sharpness_factor = 2,p=0.2),
+    v2.RandomAdjustSharpness(sharpness_factor = 0, p=0.2),
     v2.RandomHorizontalFlip(p=0.1),
     v2.RandomVerticalFlip(p=0.1),
     v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
     v2.RandomGrayscale(p=0.1),
+    v2.JPEG((5, 50)),
     v2.ToTensor(),
+    v2.RandomApply([AddSaltAndPepperNoise(salt_prob=0.02, pepper_prob=0.02)], p=0.2),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     v2.RandomErasing(p=0.1),
 ])
@@ -103,13 +108,18 @@ spoof_transforms = v2.Compose([
     v2.TrivialAugmentWide(),
     v2.RandomRotation(degrees= 20),
     v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+    v2.RandomResizedCrop(IMG_SIZE),
     v2.CenterCrop(IMG_SIZE),
-    v2.ColorJitter(brightness=0.5), #, contrast=0.5, saturation=0.5),
+    v2.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+    v2.RandomAdjustSharpness(sharpness_factor = 2, p=0.2),
+    v2.RandomAdjustSharpness(sharpness_factor = 0, p=0.2),
     v2.RandomHorizontalFlip(p=0.1),
     v2.RandomVerticalFlip(p=0.1),
     v2.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)) ,
     v2.RandomGrayscale(p=0.1),
+    v2.JPEG((5, 50)),
     v2.ToTensor(),
+    v2.RandomApply([AddSaltAndPepperNoise(salt_prob=0.02, pepper_prob=0.02)], p=0.2),
     v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     v2.RandomErasing(p=0.1),
 ])
@@ -122,8 +132,8 @@ train_flip = CustomDataset(root=train_dir,
                            special_classes=['fake']) # check this
 
 train_data_combined = ConcatDataset([train_orig, train_flip])
-train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True,
-                          collate_fn=collate_fn)
+train_loader = DataLoader(train_data_combined, batch_size=BATCH_SIZE, shuffle=True,)
+                        #   collate_fn=collate_fn)
 
 val_orig = datasets.ImageFolder(val_dir, transform=transform_original)
 val_loader = DataLoader(val_orig, batch_size=BATCH_SIZE, shuffle=False)
@@ -140,7 +150,7 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
 
     for idx, (train_x_data, train_y_data) in enumerate(train_loader):
         train_x_data, train_y_data = train_x_data.to(device), train_y_data.to(device)
-        # train_x_data, train_y_data = cutmix_or_mixup( train_x_data, train_y_data)
+        train_x_data, train_y_data = cutmix_or_mixup( train_x_data, train_y_data)
         optimizer.zero_grad()
         y_pred = model(train_x_data)
 
@@ -184,15 +194,15 @@ def train_one_epoch(model, train_loader, optimizer, criterion, scheduler_lr=None
     return avg_loss, avg_grad #, avg_f1, accuracy, 
 
 
-model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
 model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 trunc_normal_(model.head.weight, mean=0.0, std=0.02)
 model = model.to(device)
-model.load_state_dict(
-    torch.load(
-        "models/liveness/weights/vit_2024_06_06_4.pth"
-    )
-)
+# model.load_state_dict(
+#     torch.load(
+#         "models/liveness/weights/vit_2024_06_06_4.pth"
+#     )
+# )
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 # criterion = SoftTargetCrossEntropy()
@@ -236,7 +246,7 @@ for epoch in range(1, EPOCHS + 1):
         print(f"Early stopping after {epoch} Epochs")
         break
 
-model = timm.create_model('vit_base_patch32_224.augreg_in21k_ft_in1k', pretrained=True)
+model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k', pretrained=True)
 model.head = torch.nn.Linear(model.head.in_features, NUM_CLASSES)
 model = model.to(device)
 model.load_state_dict(

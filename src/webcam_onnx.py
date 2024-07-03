@@ -13,7 +13,7 @@ face_detector = FaceDetection.create(backend='yolo', model_config_path="config/f
 liveness_model = VisionTransformerModel(model_config_path="config/vit_inference.yml")
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/vid6.mp4")
+cap = cv2.VideoCapture("image_test/vid.mp4")
   
 while True:
     face_locations =[] 

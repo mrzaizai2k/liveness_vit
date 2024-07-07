@@ -16,7 +16,7 @@ from src.Utils.inference_utils import *
 
 
 # model_dir = "models/liveness/weights/vit_teacher_4_may_3.pth"
-model_dir = "models/liveness/weights/vit_2024_07_03_2.pth"
+model_dir = "models/liveness/weights/nextvit_2024_07_07_1.pth"
 
 img_height= 224
 
@@ -30,8 +30,10 @@ face_detector = FaceDetection.create(backend='yolo', model_config_path="config/f
 
 
 # Load the ViT model with specified weights
-model = timm.create_model('vit_base_patch16_224.augreg_in21k_ft_in1k')
-model.head = torch.nn.Linear(model.head.in_features, 2)
+# model_type = "vit_base_patch16_224.augreg_in21k_ft_in1k"
+model_type = 'nextvit_base.bd_in1k'
+model = timm.create_model(model_type, num_classes = 2)
+# model.head = torch.nn.Linear(model.head.in_features, 2)
 model = model.to(device)
 model.load_state_dict(torch.load(model_dir, map_location=torch.device(device)))
 # model.half()
@@ -43,7 +45,7 @@ print("data_config", data_config)
 transform_original = timm.data.create_transform(**data_config, is_training=False)
 
 # Initialize webcam
-cap = cv2.VideoCapture("image_test/real-dark.mp4")
+cap = cv2.VideoCapture("image_test/fake2.mp4")
 
 while True:
     # try: 
@@ -70,34 +72,34 @@ while True:
                 face = Image.fromarray(cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
                 input_tensor = transform_original(face).unsqueeze(0).to(device)  # unsqueeze single image into batch of 1
 
-                model.blocks[-1].attn.forward = my_forward_wrapper(model.blocks[-1].attn)
+                # model.blocks[-1].attn.forward = my_forward_wrapper(model.blocks[-1].attn)
 
                 output = model(input_tensor)
                 softmax_output = F.softmax(output, dim=1)
 
-                attn_map = model.blocks[-1].attn.attn_map.mean(dim=1).squeeze(0).detach().cpu()
+                # attn_map = model.blocks[-1].attn.attn_map.mean(dim=1).squeeze(0).detach().cpu()
 
-                cls_attn_map = model.blocks[-1].attn.cls_attn_map.mean(dim=1)
-                padding = (0, 1)  # (left, right) padding for the last dimension
-                cls_attn_map_padded = F.pad(cls_attn_map, padding, mode='constant', value=0) # should pad so the sqrt(map_size) = input size
+                # cls_attn_map = model.blocks[-1].attn.cls_attn_map.mean(dim=1)
+                # padding = (0, 1)  # (left, right) padding for the last dimension
+                # cls_attn_map_padded = F.pad(cls_attn_map, padding, mode='constant', value=0) # should pad so the sqrt(map_size) = input size
 
-                cls_weight = cls_attn_map_padded.view(map_size,map_size).detach().cpu()
+                # cls_weight = cls_attn_map_padded.view(map_size,map_size).detach().cpu()
 
-                img_resized = transform_original(face).permute(1, 2, 0).cpu() * 0.5 + 0.5
-                cls_resized = F.interpolate(cls_weight.view(1, 1, map_size,map_size), (224, 224), mode='bicubic').view(224, 224, 1).cpu()
+                # img_resized = transform_original(face).permute(1, 2, 0).cpu() * 0.5 + 0.5
+                # cls_resized = F.interpolate(cls_weight.view(1, 1, map_size,map_size), (224, 224), mode='bicubic').view(224, 224, 1).cpu()
 
-                show_img2_vid(img_resized, cls_resized)
+                # show_img2_vid(img_resized, cls_resized)
 
                 print("output ", output)
                 liveness_score = softmax_output[0][1].detach()
                 pred = output.argmax(dim=1, keepdim=True)
                 print("pred ", pred)
-                if 0.8 < liveness_score < 1:
+                if 0.6 < liveness_score < 1:
                     text = 'real'
                     color = (0,255,0)
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
                     cv2.putText(frame, f"{text}: {100*liveness_score:.3f}", (startX, startY), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
-                elif 0 < liveness_score < 0.3:
+                elif 0 < liveness_score < 0.4:
                     text = 'fake'
                     color = (255,0,0)
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)

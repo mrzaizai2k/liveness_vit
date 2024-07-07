@@ -1,6 +1,6 @@
 caffe_model: "models/face_detector/deploy.prototxt"
 caffe_weights: "models/face_detector/res10_300x300_ssd_iter_140000.caffemodel"
-min_face_size: 100 # min square face 
+min_face_size: 80 # min square face 
 max_face_count: 5 # take no largest faces
 face_threshold: 0.5
 yolo_model: "models/yolo_face/yolov8n-face.pt"

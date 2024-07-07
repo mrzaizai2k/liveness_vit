@@ -1,9 +1,9 @@
-notes: cutmix, mixup, p=[0.5, 0.2]
+notes: fix model param optim
 tags:
-  - vit
+  - nextvit
   - large data
-  - patch16
 
+MODEL_TYPE: nextvit_base.bd_in1k
 EPOCHS: 500
 PATIENCE: 3
 BATCH_SIZE: 32

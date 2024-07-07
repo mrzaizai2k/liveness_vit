@@ -4,6 +4,7 @@ sys.path.append("")
 import torch
 from PIL import Image
 from torchvision.transforms import v2
+from  torchvision.transforms import InterpolationMode 
 
 
 class AddGaussianNoise(object):
@@ -40,12 +41,27 @@ class AddSaltAndPepperNoise(object):
 
 
 if __name__ == "__main__":
-    img_path = 'image_test/realtwo.jpg'
+    img_path = 'image_test/fakeone.jpg'
     img = Image.open(img_path)
+    IMG_SIZE=224
     transform_original = v2.Compose([
+        # v2.TrivialAugmentWide(),
+        # v2.RandomRotation(degrees= 20),
+        v2.Resize(232, interpolation=InterpolationMode.BICUBIC,),
+        v2.CenterCrop(IMG_SIZE),
+        # v2.RandomApply([v2.RandomResizedCrop(IMG_SIZE)] , p=0.7),
+        # v2.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+        # v2.RandomAdjustSharpness(sharpness_factor = 2,p=0.5),
+        # v2.RandomAdjustSharpness(sharpness_factor = 0, p=0.5),
+        # v2.RandomHorizontalFlip(p=0.3),
+        # v2.RandomVerticalFlip(p=0.2),
+        v2.RandomApply([v2.GaussianBlur(kernel_size=7, sigma=(0.1, 2.0))] , p=1),
+        # v2.RandomGrayscale(p=0.1),
+        # v2.JPEG((5, 50)),
         v2.ToTensor(),
-        # v2.RandomApply([AddGaussianNoise(0., 0.05)], p=1),
-        v2.RandomApply([AddSaltAndPepperNoise(salt_prob=0.02, pepper_prob=0.02)], p=1),
+        # v2.RandomApply([AddSaltAndPepperNoise(salt_prob=0.02, pepper_prob=0.02)], p=0.5),
+        # v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        # v2.RandomErasing(p=0.1),
         v2.ToPILImage(),
     ])
 
